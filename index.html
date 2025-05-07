@@ -12,10 +12,60 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <style>
-        /* Styles remain largely the same - omitted for brevity */
         body { font-family: 'Inter', sans-serif; overscroll-behavior: contain; background-color: #f8fafc; }
         .app-section { display: none; }
         .app-section.active { display: block; }
+
+        /* User Selection Page Styles */
+        #user-selection-page {
+            display: flex; /* Changed to flex for initial state */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-color: #f8fafc; /* Match body */
+        }
+        #user-selection-container {
+            background-color: white;
+            padding: 2rem 2.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        #existingUsersList { list-style: none; padding: 0; margin-top: 1.5rem; max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.375rem;}
+        #existingUsersList li {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: left;
+            font-weight: 500;
+        }
+        #existingUsersList li:last-child { border-bottom: none; }
+        #existingUsersList li:hover { background-color: #f3f4f6; }
+        #newUserNameInput {
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            margin-bottom: 0.75rem;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+        #createUserButton {
+            width: 100%;
+            background-color: #4f46e5; color: white; font-weight: 600;
+            padding: 0.75rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            transition: background-color 0.2s; border: none; cursor: pointer;
+        }
+        #createUserButton:hover { background-color: #4338ca; }
+
+        /* App Content (initially hidden) */
+        #app-content { display: none; }
+
+
         #bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.08); background-color: #ffffff; }
         main { padding-bottom: 90px; }
         .chat-bubble { padding: 0.6rem 1.1rem; border-radius: 1.25rem; max-width: 85%; word-wrap: break-word; line-height: 1.4; }
@@ -42,41 +92,70 @@
         *:focus:not(:focus-visible) { outline: none; }
         #addReminderFormContainer { display: none; }
         #addReminderFormContainer.active { display: block; }
-        /* Removed Auth Container related styles */
-        /* #auth-container { padding: 20px; text-align: center; margin-top: 40px; } */
-        /* #user-info { margin-bottom: 15px; } */
-        /* #login-button, #logout-button { background-color: #4f46e5; color: white; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: all 0.2s ease-in-out; display: inline-block; margin: 5px; border: none; cursor: pointer;} */
-        /* #login-button:hover, #logout-button:hover { background-color: #4338ca; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); } */
-        /* .logged-out main, .logged-out #bottom-nav { display: none; } */ /* Removed */
-        /* .logged-in #auth-container { display: none; } */ /* Removed */
-        /* .logged-out #user-auth-controls { display: none; } */ /* Removed */
-        /* .logged-in #user-auth-controls { display: block; } */ /* Removed */
+
+        #switchUserBtn {
+            background-color: #6366f1; /* A slightly different indigo */
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        #switchUserBtn:hover { background-color: #4f46e5; }
+        #currentUserDisplay { font-size: 0.85rem; color: #e0e7ff; margin-left: auto; /* Pushes to the right */ margin-right: 1rem;}
 
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800"> <header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
-        <div class="flex justify-between items-center max-w-6xl mx-auto px-4">
-            <h1 class="text-xl font-semibold text-center tracking-wide flex-grow">SNG Finance</h1>
+<body class="bg-slate-50 text-slate-800">
+
+    <section id="user-selection-page">
+        <div id="user-selection-container">
+            <h2 class="text-2xl font-semibold text-slate-900 mb-1">Welcome!</h2>
+            <p class="text-sm text-slate-600 mb-6">Select your profile or create a new one.</p>
+
+            <div class="mb-4">
+                <label for="newUserNameInput" class="block text-sm font-medium text-slate-700 mb-1 text-left">Create New Profile:</label>
+                <input type="text" id="newUserNameInput" placeholder="Enter Your Name" class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             </div>
-    </header>
+            <button id="createUserButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mb-6">Create & Start</button>
 
-    <main class="p-5">
-        <section id="dashboard" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Dashboard</h2> <div class="grid grid-cols-1 md:grid-cols-3 gap-5"> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-emerald-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Debit Card</h3> </div> <p id="balance-debit" class="text-3xl font-bold text-slate-800">$0.00</p> <p class="text-sm text-slate-500 mt-1">Available Balance</p> </div> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Personal Credit Card</h3> </div> <p id="balance-personal_cc" class="text-3xl font-bold balance-ok">$0.00</p> <p class="text-sm text-slate-500 mt-1">Amount Owed</p> </div> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-purple-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Parent's Credit Card</h3> </div> <p id="balance-parent_cc" class="text-3xl font-bold balance-ok">$0.00 <span class="text-base font-normal text-slate-500">/ $500 Limit</span></p> <p class="text-sm text-slate-500 mt-1">Amount Owed</p> <div class="w-full bg-slate-200 rounded-full h-3 mt-3"> <div id="limitBar-parent_cc" class="h-3 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div> </div> </div> </div> <div class="flex justify-around space-x-4 mt-8"> <button onclick="prepareTransactionForm('income')" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out transform hover:-translate-y-0.5">Add Income</button> <button onclick="prepareTransactionForm('expense')" class="flex-1 text-center bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out transform hover:-translate-y-0.5">Add Expense</button> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mt-8"> <h3 class="font-semibold text-slate-700 mb-4">Recent Transactions</h3> <ul id="recentTransactionList" class="space-y-3"> <li class="text-slate-500 italic">No transactions yet.</li> </ul> <button class="text-indigo-600 hover:text-indigo-700 mt-4 text-sm font-medium w-full text-center" onclick="navigateTo('transactions')">View All Transactions</button> </div> </section>
-        <section id="transactions" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Manage Transactions</h2> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 id="transactionFormTitle" class="text-lg font-semibold text-slate-800 mb-4">Add New Transaction</h3> <form id="addTransactionForm" class="space-y-4"> <input type="hidden" id="transactionId" name="transactionId"> <div> <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Description</label> <input type="text" id="description" name="description" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <div> <label for="amount" class="block text-sm font-medium text-slate-700 mb-1">Amount</label> <input type="number" id="amount" name="amount" step="0.01" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Income is positive, Expense is negative"> </div> <div> <label for="category" class="block text-sm font-medium text-slate-700 mb-1">Category</label> <select id="category" name="category" required class="block w-full px-3 py-2 border border-slate-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> <option value="food">Food</option> <option value="transport">Transport</option> <option value="entertainment">Entertainment</option> <option value="subscriptions">Subscriptions</option> <option value="shopping">Shopping</option> <option value="bills">Bills</option> <option value="rent">Rent</option> <option value="income">Income / CC Payment</option> <option value="other">Other Expense</option> </select> </div> <div> <label for="account" class="block text-sm font-medium text-slate-700 mb-1">Account</label> <select id="account" name="account" required class="block w-full px-3 py-2 border border-slate-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> <option value="debit">Debit Card</option> <option value="personal_cc">Personal Credit Card</option> <option value="parent_cc">Parent's Credit Card</option> </select> </div> <div> <label for="date" class="block text-sm font-medium text-slate-700 mb-1">Date</label> <input type="date" id="date" name="date" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <button id="saveTransactionBtn" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-3">Save Transaction</button> <button id="cancelEditBtn" type="button" onclick="resetTransactionForm()" class="w-full bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-2 hidden">Cancel Edit</button> </form> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="text-lg font-semibold text-slate-800 mb-4">History</h3> <ul id="transactionList" class="space-y-4"> <li class="text-slate-500 italic">No transactions recorded yet.</li> </ul> </div> </section>
-        <section id="budget" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Budget Tracker</h2> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-3">Monthly Expenses</h3> <p id="monthlySpendingSummary" class="text-3xl font-bold text-slate-800">$0.00 <span class="text-lg font-normal text-slate-500">/ $1800 Budget</span></p> <div class="w-full bg-slate-200 rounded-full h-4 mt-4"> <div id="overallBudgetBar" class="bg-blue-500 h-4 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div> </div> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-4 text-center">Expense Breakdown</h3> <div class="w-full max-w-xs mx-auto"> <canvas id="spendingPieChart"></canvas> </div> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-4">Category Budgets</h3> <ul id="categoryBudgetList" class="space-y-5"></ul> <button class="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-lg border border-slate-300 transition duration-200 ease-in-out">Manage Budgets (Future)</button> </div> </section>
-        <section id="reminders" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Payment Reminders</h2> <button onclick="toggleReminderForm(true)" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mb-5 transform hover:-translate-y-0.5">Add New Reminder</button> <div id="addReminderFormContainer" class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6"> <h3 id="reminderFormTitle" class="text-lg font-semibold text-slate-800 mb-4">Add Reminder</h3> <form id="addReminderForm" class="space-y-4"> <input type="hidden" id="reminderId" name="reminderId"> <div> <label for="reminderDescription" class="block text-sm font-medium text-slate-700 mb-1">Description</label> <input type="text" id="reminderDescription" name="description" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <div> <label for="reminderDueDate" class="block text-sm font-medium text-slate-700 mb-1">Due Date</label> <input type="date" id="reminderDueDate" name="dueDate" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <div class="flex space-x-3"> <button id="saveReminderBtn" type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-1">Save Reminder</button> <button id="cancelReminderEditBtn" type="button" onclick="toggleReminderForm(false); resetReminderForm();" class="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-1">Cancel</button> </div> </form> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="text-lg font-semibold text-slate-800 mb-4">Upcoming Reminders</h3> <ul id="reminderList" class="space-y-4"> <li class="text-slate-500 italic">No reminders set yet.</li> </ul> </div> </section>
-        <section id="advice" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Financial Advice & Tips</h2> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-emerald-700 mb-3">Personalized Advice (Example)</h3> <p class="text-slate-700 leading-relaxed">Based on your spending, consider exploring student discounts...</p> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-blue-700 mb-3">Credit Score Improvement Tips</h3> <ul class="list-disc list-inside space-y-2 text-slate-700 leading-relaxed"><li>Always pay bills on time...</li></ul> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-purple-700 mb-3">Boston Student Resources</h3> <ul class="list-disc list-inside space-y-2 text-slate-700 leading-relaxed"><li>Check financial aid office...</li></ul> </div> </section>
-        <section id="chatbot" class="app-section space-y-5"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">AI Financial Assistant</h2> <div id="chatbox" class="h-96 overflow-y-auto border border-slate-200 p-4 rounded-xl bg-white shadow-sm space-y-4 flex flex-col"> <div class="chat-bubble chat-bubble-bot">Hello! Ask me how to save money...</div> </div> <div class="flex space-x-3"> <input type="text" id="chatInput" class="flex-grow px-4 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ask me anything..."> <button id="sendChat" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out">Send</button> </div> </section>
-    </main>
+            <div>
+                <h3 class="text-md font-semibold text-slate-800 mb-2 text-left">Or Select Existing Profile:</h3>
+                <ul id="existingUsersList" class="space-y-0">
+                    <li class="text-slate-400 italic p-3 text-center">No profiles yet. Create one!</li>
+                </ul>
+            </div>
+        </div>
+    </section>
 
-    <nav id="bottom-nav" class="grid grid-cols-6 border-t border-slate-200">
-        <button onclick="navigateTo('dashboard')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="dashboard"> <svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg><span class="text-xs font-medium">Home</span></button>
-        <button onclick="navigateTo('transactions')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="transactions"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg><span class="text-xs font-medium">History</span></button>
-        <button onclick="navigateTo('budget')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="budget"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg><span class="text-xs font-medium">Budget</span></button>
-        <button onclick="navigateTo('reminders')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="reminders"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg><span class="text-xs font-medium">Reminders</span></button>
-        <button onclick="navigateTo('advice')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="advice"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg><span class="text-xs font-medium">Advice</span></button>
-        <button onclick="navigateTo('chatbot')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="chatbot"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg><span class="text-xs font-medium">Chatbot</span></button>
-    </nav>
+    <div id="app-content">
+        <header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
+            <div class="flex justify-between items-center max-w-6xl mx-auto px-4">
+                <h1 class="text-xl font-semibold tracking-wide">SNG Finance</h1>
+                <span id="currentUserDisplay"></span>
+                <button id="switchUserBtn" class="ml-3">Switch User</button>
+            </div>
+        </header>
+
+        <main class="p-5">
+            <section id="dashboard" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Dashboard</h2> <div class="grid grid-cols-1 md:grid-cols-3 gap-5"> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-emerald-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Debit Card</h3> </div> <p id="balance-debit" class="text-3xl font-bold text-slate-800">$0.00</p> <p class="text-sm text-slate-500 mt-1">Available Balance</p> </div> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Personal Credit Card</h3> </div> <p id="balance-personal_cc" class="text-3xl font-bold balance-ok">$0.00</p> <p class="text-sm text-slate-500 mt-1">Amount Owed</p> </div> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-purple-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Parent's Credit Card</h3> </div> <p id="balance-parent_cc" class="text-3xl font-bold balance-ok">$0.00 <span class="text-base font-normal text-slate-500">/ $500 Limit</span></p> <p class="text-sm text-slate-500 mt-1">Amount Owed</p> <div class="w-full bg-slate-200 rounded-full h-3 mt-3"> <div id="limitBar-parent_cc" class="h-3 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div> </div> </div> </div> <div class="flex justify-around space-x-4 mt-8"> <button onclick="prepareTransactionForm('income')" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out transform hover:-translate-y-0.5">Add Income</button> <button onclick="prepareTransactionForm('expense')" class="flex-1 text-center bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out transform hover:-translate-y-0.5">Add Expense</button> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mt-8"> <h3 class="font-semibold text-slate-700 mb-4">Recent Transactions</h3> <ul id="recentTransactionList" class="space-y-3"> <li class="text-slate-500 italic">No transactions yet.</li> </ul> <button class="text-indigo-600 hover:text-indigo-700 mt-4 text-sm font-medium w-full text-center" onclick="navigateTo('transactions')">View All Transactions</button> </div> </section>
+            <section id="transactions" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Manage Transactions</h2> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 id="transactionFormTitle" class="text-lg font-semibold text-slate-800 mb-4">Add New Transaction</h3> <form id="addTransactionForm" class="space-y-4"> <input type="hidden" id="transactionId" name="transactionId"> <div> <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Description</label> <input type="text" id="description" name="description" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <div> <label for="amount" class="block text-sm font-medium text-slate-700 mb-1">Amount</label> <input type="number" id="amount" name="amount" step="0.01" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Income is positive, Expense is negative"> </div> <div> <label for="category" class="block text-sm font-medium text-slate-700 mb-1">Category</label> <select id="category" name="category" required class="block w-full px-3 py-2 border border-slate-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> <option value="food">Food</option> <option value="transport">Transport</option> <option value="entertainment">Entertainment</option> <option value="subscriptions">Subscriptions</option> <option value="shopping">Shopping</option> <option value="bills">Bills</option> <option value="rent">Rent</option> <option value="income">Income / CC Payment</option> <option value="other">Other Expense</option> </select> </div> <div> <label for="account" class="block text-sm font-medium text-slate-700 mb-1">Account</label> <select id="account" name="account" required class="block w-full px-3 py-2 border border-slate-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> <option value="debit">Debit Card</option> <option value="personal_cc">Personal Credit Card</option> <option value="parent_cc">Parent's Credit Card</option> </select> </div> <div> <label for="date" class="block text-sm font-medium text-slate-700 mb-1">Date</label> <input type="date" id="date" name="date" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <button id="saveTransactionBtn" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-3">Save Transaction</button> <button id="cancelEditBtn" type="button" onclick="resetTransactionForm()" class="w-full bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-2 hidden">Cancel Edit</button> </form> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="text-lg font-semibold text-slate-800 mb-4">History</h3> <ul id="transactionList" class="space-y-4"> <li class="text-slate-500 italic">No transactions recorded yet.</li> </ul> </div> </section>
+            <section id="budget" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Budget Tracker</h2> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-3">Monthly Expenses</h3> <p id="monthlySpendingSummary" class="text-3xl font-bold text-slate-800">$0.00 <span class="text-lg font-normal text-slate-500">/ $1800 Budget</span></p> <div class="w-full bg-slate-200 rounded-full h-4 mt-4"> <div id="overallBudgetBar" class="bg-blue-500 h-4 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div> </div> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-4 text-center">Expense Breakdown</h3> <div class="w-full max-w-xs mx-auto"> <canvas id="spendingPieChart"></canvas> </div> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-4">Category Budgets</h3> <ul id="categoryBudgetList" class="space-y-5"></ul> <button class="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-lg border border-slate-300 transition duration-200 ease-in-out">Manage Budgets (Future)</button> </div> </section>
+            <section id="reminders" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Payment Reminders</h2> <button onclick="toggleReminderForm(true)" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mb-5 transform hover:-translate-y-0.5">Add New Reminder</button> <div id="addReminderFormContainer" class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6"> <h3 id="reminderFormTitle" class="text-lg font-semibold text-slate-800 mb-4">Add Reminder</h3> <form id="addReminderForm" class="space-y-4"> <input type="hidden" id="reminderId" name="reminderId"> <div> <label for="reminderDescription" class="block text-sm font-medium text-slate-700 mb-1">Description</label> <input type="text" id="reminderDescription" name="description" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <div> <label for="reminderDueDate" class="block text-sm font-medium text-slate-700 mb-1">Due Date</label> <input type="date" id="reminderDueDate" name="dueDate" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <div class="flex space-x-3"> <button id="saveReminderBtn" type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-1">Save Reminder</button> <button id="cancelReminderEditBtn" type="button" onclick="toggleReminderForm(false); resetReminderForm();" class="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-1">Cancel</button> </div> </form> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="text-lg font-semibold text-slate-800 mb-4">Upcoming Reminders</h3> <ul id="reminderList" class="space-y-4"> <li class="text-slate-500 italic">No reminders set yet.</li> </ul> </div> </section>
+            <section id="advice" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Financial Advice & Tips</h2> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-emerald-700 mb-3">Personalized Advice (Example)</h3> <p class="text-slate-700 leading-relaxed">Based on your spending, consider exploring student discounts...</p> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-blue-700 mb-3">Credit Score Improvement Tips</h3> <ul class="list-disc list-inside space-y-2 text-slate-700 leading-relaxed"><li>Always pay bills on time...</li></ul> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-purple-700 mb-3">Boston Student Resources</h3> <ul class="list-disc list-inside space-y-2 text-slate-700 leading-relaxed"><li>Check financial aid office...</li></ul> </div> </section>
+            <section id="chatbot" class="app-section space-y-5"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">AI Financial Assistant</h2> <div id="chatbox" class="h-96 overflow-y-auto border border-slate-200 p-4 rounded-xl bg-white shadow-sm space-y-4 flex flex-col"> <div class="chat-bubble chat-bubble-bot">Hello! Ask me how to save money...</div> </div> <div class="flex space-x-3"> <input type="text" id="chatInput" class="flex-grow px-4 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ask me anything..."> <button id="sendChat" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out">Send</button> </div> </section>
+        </main>
+
+        <nav id="bottom-nav" class="grid grid-cols-6 border-t border-slate-200">
+            <button onclick="navigateTo('dashboard')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="dashboard"> <svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg><span class="text-xs font-medium">Home</span></button>
+            <button onclick="navigateTo('transactions')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="transactions"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg><span class="text-xs font-medium">History</span></button>
+            <button onclick="navigateTo('budget')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="budget"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg><span class="text-xs font-medium">Budget</span></button>
+            <button onclick="navigateTo('reminders')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="reminders"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg><span class="text-xs font-medium">Reminders</span></button>
+            <button onclick="navigateTo('advice')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="advice"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg><span class="text-xs font-medium">Advice</span></button>
+            <button onclick="navigateTo('chatbot')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="chatbot"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg><span class="text-xs font-medium">Chatbot</span></button>
+        </nav>
+    </div>
 
     <div id="toast-notification"></div>
 
@@ -85,24 +164,35 @@
         const sections = document.querySelectorAll('.app-section');
         const navItems = document.querySelectorAll('.nav-item');
         const defaultSection = 'dashboard';
-        // const transactionsKey = 'sngFinanceTransactions'; // Not used if using Firestore primarily
-        // const budgetsKey = 'sngFinanceBudgets'; // Not used if using Firestore primarily
-        // const remindersKey = 'sngFinanceReminders'; // Not used if using Firestore primarily
+
         let transactionsData = [];
         let editingTransactionId = null;
-        let appBudgets = {}; // This seems to be local, check if it needs to be in Firestore
+        let appBudgets = {}; // Remains local or can be enhanced for per-user Firestore storage later
         let remindersData = [];
         let editingReminderId = null;
-        // let currentUserId = null; // Removed
+
+        let currentUserName = null; // Stores the currently selected user's name
+        const userProfilesKey = 'sngFinanceUserProfiles'; // localStorage key for user names
+
         let unsubscribeTransactions = null;
         let unsubscribeReminders = null;
 
+        // DOM Elements for User Selection
+        const userSelectionPage = document.getElementById('user-selection-page');
+        const appContent = document.getElementById('app-content');
+        const newUserNameInput = document.getElementById('newUserNameInput');
+        const createUserButton = document.getElementById('createUserButton');
+        const existingUsersList = document.getElementById('existingUsersList');
+        const switchUserBtn = document.getElementById('switchUserBtn');
+        const currentUserDisplay = document.getElementById('currentUserDisplay');
+
+
         // --- Firebase Config (Replace with your actual config) ---
         const firebaseConfig = {
-            apiKey: "AIzaSyBiGFtbpGto5ZtyliohDkgUyEawKfQFeOk", // Replace with your actual API key
+            apiKey: "AIzaSyBiGFtbpGto5ZtyliohDkgUyEawKfQFeOk", // Replace
             authDomain: "boston-student-finance.firebaseapp.com",
             projectId: "boston-student-finance",
-            storageBucket: "boston-student-finance.firebasestorage.app",
+            storageBucket: "boston-student-finance.firebasestorage.app", // Corrected: was .appspot.com, should be .app
             messagingSenderId: "547176457645",
             appId: "1:547176457645:web:f3dc7064ba8b94ac5d2d24"
         };
@@ -110,7 +200,6 @@
         // --- Initialize Firebase ---
         let app;
         let db;
-        // let auth; // Removed
         try {
             if (!firebase.apps.length) {
                 app = firebase.initializeApp(firebaseConfig);
@@ -118,11 +207,10 @@
                 app = firebase.app();
             }
             db = firebase.firestore();
-            // auth = firebase.auth(); // Removed
             console.log("Firebase initialized (App and Firestore only)");
         } catch (error) {
             console.error("Error initializing Firebase:", error);
-            showToast("Error connecting to backend.", 5000);
+            showToast("Error connecting to backend. Some features might be unavailable.", 5000);
         }
 
         // --- PWA Service Worker Registration ---
@@ -146,8 +234,100 @@
             }, duration);
         }
 
+        // --- User Management Functions ---
+        function loadUserProfiles() {
+            const profiles = JSON.parse(localStorage.getItem(userProfilesKey)) || [];
+            existingUsersList.innerHTML = ''; // Clear current list
+            if (profiles.length === 0) {
+                existingUsersList.innerHTML = '<li class="text-slate-400 italic p-3 text-center">No profiles yet. Create one!</li>';
+                return;
+            }
+            profiles.forEach(name => {
+                const li = document.createElement('li');
+                li.textContent = name;
+                li.addEventListener('click', () => handleSelectUser(name));
+                existingUsersList.appendChild(li);
+            });
+        }
+
+        function handleCreateUser() {
+            const newName = newUserNameInput.value.trim();
+            if (!newName) {
+                showToast("Please enter a name for the new profile.", 3000);
+                newUserNameInput.focus();
+                return;
+            }
+            let profiles = JSON.parse(localStorage.getItem(userProfilesKey)) || [];
+            if (profiles.includes(newName)) {
+                 // For simplicity, we'll allow selection. Or show error:
+                // showToast(`Profile "${newName}" already exists. Select it from the list or choose a different name.`, 4000);
+                // newUserNameInput.focus();
+                // return;
+                console.log(`Profile "${newName}" already exists, selecting it.`);
+            } else {
+                profiles.push(newName);
+                localStorage.setItem(userProfilesKey, JSON.stringify(profiles));
+            }
+            newUserNameInput.value = ''; // Clear input
+            proceedToApp(newName);
+        }
+
+        function handleSelectUser(userName) {
+            proceedToApp(userName);
+        }
+
+        function proceedToApp(userName) {
+            currentUserName = userName;
+            console.log(`Proceeding to app as user: ${userName}`);
+
+            userSelectionPage.style.display = 'none';
+            appContent.style.display = 'block';
+            currentUserDisplay.textContent = `User: ${userName}`;
+
+            // Reset data arrays before loading new user's data
+            transactionsData = [];
+            remindersData = [];
+            // appBudgets can be reset or re-initialized if they become user-specific in Firestore
+
+            setupFirestoreListeners(); // This will fetch data for currentUserName
+            navigateTo(defaultSection); // Show dashboard
+            renderAll(); // Initial render with potentially empty (then soon-to-be-filled) data
+        }
+
+        function switchToUserSelectionPage() {
+            console.log("Switching to user selection page.");
+            detachFirestoreListeners();
+            currentUserName = null;
+
+            // Clear data arrays
+            transactionsData = [];
+            remindersData = [];
+            renderAll(); // Clear UI from previous user's data
+
+            appContent.style.display = 'none';
+            userSelectionPage.style.display = 'flex'; // Or 'block' depending on your main container for user-selection-page
+            currentUserDisplay.textContent = '';
+
+
+            loadUserProfiles(); // Refresh the list of users
+            if (document.getElementById(defaultSection)) { // Ensure default section exists if trying to manipulate it
+                 document.getElementById(defaultSection).classList.remove('active'); // Deactivate any section
+            }
+            sections.forEach(section => section.classList.remove('active')); // Ensure all app sections are hidden
+            navItems.forEach(item => { // Reset nav item styles
+                item.classList.remove('text-indigo-600', 'bg-indigo-50');
+                item.classList.add('text-slate-500', 'bg-white');
+            });
+        }
+
+
         // --- Navigation Logic ---
         function navigateTo(sectionId) {
+            if (!currentUserName) { // Prevent navigation if no user is selected
+                console.warn("No user selected. Navigation blocked.");
+                switchToUserSelectionPage(); // Optionally force back to user selection
+                return;
+            }
             sections.forEach(section => section.classList.remove('active'));
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
@@ -161,7 +341,7 @@
                 item.classList.toggle('text-indigo-600', isActive);
                 item.classList.toggle('bg-indigo-50', isActive);
                 item.classList.toggle('text-slate-500', !isActive);
-                item.classList.toggle('bg-white', !isActive);
+                item.classList.toggle('bg-white', !isActive); // Ensure default for non-active
             });
             window.scrollTo(0, 0);
         }
@@ -185,8 +365,8 @@
                 categorySelect.value = 'income';
             } else {
                 amountInput.placeholder = "Enter negative amount (e.g., -15.50)";
-                accountSelect.value = 'debit';
-                if(categorySelect.value === 'income') categorySelect.value = 'other';
+                // accountSelect.value = 'debit'; // Keep previous or default
+                if(categorySelect.value === 'income') categorySelect.value = 'food'; // Default to food if it was income
                 categorySelect.disabled = false;
             }
             dateInput.valueAsDate = new Date();
@@ -203,7 +383,7 @@
             saveTransactionButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
             cancelTransactionButton.classList.add('hidden');
             categorySelect.disabled = false;
-            accountSelect.value = 'debit';
+            accountSelect.value = 'debit'; // Default account
             dateInput.valueAsDate = new Date();
         }
 
@@ -212,7 +392,7 @@
         const reminderForm = document.getElementById('addReminderForm');
         const reminderFormTitle = document.getElementById('reminderFormTitle');
         const saveReminderButton = document.getElementById('saveReminderBtn');
-        const cancelReminderButton = document.getElementById('cancelReminderEditBtn');
+        // const cancelReminderButton = document.getElementById('cancelReminderEditBtn'); // Already handled by inline onclick
         const reminderDescriptionInput = document.getElementById('reminderDescription');
         const reminderDueDateInput = document.getElementById('reminderDueDate');
         const reminderIdInput = document.getElementById('reminderId');
@@ -237,26 +417,34 @@
         }
 
         // --- Firebase Data Functions ---
-        const GENERIC_USER_ID = "sharedUserData"; // Static ID for non-authenticated users
+        // const GENERIC_USER_ID = "sharedUserData"; // No longer needed
 
         function getUserCollectionRef(collectionName) {
             if (!db) {
                 console.error("Firestore (db) is not initialized!");
+                showToast("Data backend not ready.", 3000);
                 return null;
             }
-            // All data will be stored under a generic user ID path
-            return db.collection('users').doc(GENERIC_USER_ID).collection(collectionName);
+            if (!currentUserName) {
+                console.error("No user selected! Cannot get collection reference for:", collectionName);
+                // This state should ideally be prevented by UI flow
+                // Returning a dummy object that fails operations or an actual null
+                return null; // Or a more sophisticated dummy
+            }
+            // All data will be stored under the current user's name
+            return db.collection('users').doc(currentUserName).collection(collectionName);
         }
 
         async function addTransactionToFirestore(transaction) {
             const transactionsRef = getUserCollectionRef('transactions');
-            if (!transactionsRef) {
-                showToast("Data backend not ready.", 3000);
+            if (!transactionsRef) { // Will be null if no currentUserName or db issue
+                showToast("Cannot add transaction: No active user or backend issue.", 4000);
                 return;
             }
             try {
                 const dataToAdd = { ...transaction, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-                delete dataToAdd.id;
+                delete dataToAdd.id; // Ensure no local id field is sent if it was accidentally set
+                delete dataToAdd.transactionId; // Ensure this hidden input's name is not part of data
                 await transactionsRef.add(dataToAdd);
                 showToast('Transaction added!');
                 resetTransactionForm();
@@ -269,13 +457,14 @@
         async function updateTransactionInFirestore(transaction) {
             const transactionsRef = getUserCollectionRef('transactions');
             if (!transactionsRef || !transaction.id) {
-                showToast("Data backend not ready or missing transaction ID.", 3000);
+                showToast("Cannot update transaction: No active user, backend issue, or missing ID.", 4000);
                 return;
             }
             try {
                 const docRef = transactionsRef.doc(transaction.id.toString());
                 const dataToUpdate = { ...transaction };
-                delete dataToUpdate.id;
+                delete dataToUpdate.id; // Don't store the ID within the document itself if it's the doc name
+                delete dataToUpdate.transactionId;
                 await docRef.update(dataToUpdate);
                 showToast('Transaction updated!');
                 resetTransactionForm();
@@ -287,15 +476,9 @@
 
         async function deleteTransactionFromFirestore(id) {
             const transactionsRef = getUserCollectionRef('transactions');
-            if (!transactionsRef) {
-                showToast("Data backend not ready.", 3000);
-                return;
-            }
-            if (!id) {
-                console.error("Delete failed: Invalid ID provided.");
-                showToast("Error: Invalid transaction ID.", 5000);
-                return;
-            }
+            if (!transactionsRef) { showToast("Cannot delete: Backend not ready or no user.", 3000); return; }
+            if (!id) { console.error("Delete failed: Invalid ID."); showToast("Error: Invalid transaction ID.", 5000); return; }
+
             if (confirm('Are you sure you want to delete this transaction?')) {
                 try {
                     await transactionsRef.doc(id.toString()).delete();
@@ -309,10 +492,11 @@
 
         async function addReminderToFirestore(reminder) {
             const remindersRef = getUserCollectionRef('reminders');
-            if (!remindersRef) { showToast("Data backend not ready.", 3000); return; }
+            if (!remindersRef) { showToast("Cannot add reminder: No active user or backend issue.", 4000); return; }
             try {
                 const dataToAdd = { ...reminder, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
                 delete dataToAdd.id;
+                delete dataToAdd.reminderId;
                 await remindersRef.add(dataToAdd);
                 showToast('Reminder added!');
                 resetReminderForm();
@@ -321,11 +505,12 @@
         }
         async function updateReminderInFirestore(reminder) {
             const remindersRef = getUserCollectionRef('reminders');
-            if (!remindersRef || !reminder.id) { showToast("Data backend not ready or missing reminder ID.", 3000); return; }
+            if (!remindersRef || !reminder.id) { showToast("Cannot update reminder: No active user, backend issue or missing ID.", 4000); return; }
             try {
                 const docRef = remindersRef.doc(reminder.id.toString());
                 const dataToUpdate = { ...reminder };
                 delete dataToUpdate.id;
+                delete dataToUpdate.reminderId;
                 await docRef.update(dataToUpdate);
                 showToast('Reminder updated!');
                 resetReminderForm();
@@ -334,7 +519,7 @@
         }
         async function deleteReminderFromFirestore(id) {
             const remindersRef = getUserCollectionRef('reminders');
-            if (!remindersRef) { showToast("Data backend not ready.", 3000); return; }
+            if (!remindersRef) { showToast("Cannot delete: Backend not ready or no user.", 3000); return; }
             if (!id) { console.error("Delete failed: Invalid ID."); showToast("Error: Invalid reminder ID.", 5000); return; }
             if (confirm('Are you sure you want to delete this reminder?')) {
                 try {
@@ -355,16 +540,22 @@
         function renderTransactions() {
             transactionListElement.innerHTML = '';
             if (transactionsData.length === 0) { transactionListElement.innerHTML = '<li class="text-slate-500 italic">No transactions recorded yet.</li>'; return; }
-            transactionsData.forEach(t => {
+            // Sort by date just in case Firestore listener doesn't perfectly guarantee it or if local modifications happen.
+            const sortedTransactions = [...transactionsData].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            sortedTransactions.forEach(t => {
                 const li = document.createElement('li');
                 li.className = 'flex justify-between items-center border-b border-slate-100 pb-4 pt-2 hover:bg-slate-50 px-2 -mx-2 rounded-md';
                 const amountClass = t.amount >= 0 ? 'amount-income' : 'amount-expense';
                 const amountFormatted = Math.abs(t.amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
                 const sign = t.amount >= 0 ? '+' : '-';
-                const dateFormatted = t.date ? new Date(t.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Date';
+                 // Ensure date is handled robustly; add 'T00:00:00' for consistent local time parsing
+                const dateObj = t.date ? new Date(t.date + (t.date.includes('T') ? '' : 'T00:00:00')) : null;
+                const dateFormatted = dateObj ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Date';
+
                 li.innerHTML = `
                     <div class="flex-1 mr-3 overflow-hidden"> <p class="font-medium text-slate-800 truncate">${t.description || 'No description'}</p>
-                        <p class="text-sm text-slate-500">${dateFormatted} - ${t.account ? t.account.replace('_', ' ').replace('cc', 'CC') : 'N/A'}</p>
+                        <p class="text-sm text-slate-500">${dateFormatted} - ${t.account ? t.account.replace(/_/g, ' ').replace('cc', 'CC') : 'N/A'}</p>
                         <p class="text-xs text-slate-400 capitalize">Category: ${t.category ? t.category.replace(/_/g, ' ') : 'N/A'}</p>
                     </div>
                     <div class="text-right flex-shrink-0">
@@ -379,7 +570,9 @@
         }
         function renderRecentTransactions() {
             recentTransactionListElement.innerHTML = '';
-            const recentTransactions = transactionsData.slice(0, 3);
+            const sortedTransactions = [...transactionsData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const recentTransactions = sortedTransactions.slice(0, 3);
+
             if (recentTransactions.length === 0) { recentTransactionListElement.innerHTML = '<li class="text-slate-500 italic">No transactions yet.</li>'; return; }
             recentTransactions.forEach(t => {
                 const li = document.createElement('li');
@@ -397,63 +590,94 @@
             const balances = { debit: 0, personal_cc: 0, parent_cc: 0 };
             transactionsData.forEach(t => {
                 if (balances.hasOwnProperty(t.account)) {
-                    if (t.account === 'personal_cc' || t.account === 'parent_cc') { balances[t.account] -= t.amount; }
-                    else { balances[t.account] += t.amount; }
+                    // For credit cards, a positive transaction (payment TO card) DECREASES amount owed.
+                    // A negative transaction (expense ON card) INCREASES amount owed.
+                    // So, if it's income/payment to CC, it's positive, reducing what's owed.
+                    // If it's an expense from CC, it's negative, increasing what's owed.
+                    // The current logic correctly sums these up.
+                    // Amount owed should be negative of the sum of amounts.
+                    // So, if I spend $50 (amount: -50), owed is $50. If I pay $30 (amount: 30), owed becomes $20.
+                    // Balances[t.account] += t.amount. Then owed is -balances[t.account]
+                    balances[t.account] += t.amount;
                 }
             });
             document.getElementById('balance-debit').textContent = balances.debit.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-            const balanceThreshold = 140;
-            const personalCcBalance = balances.personal_cc;
-            personalCcBalanceEl.textContent = personalCcBalance.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+            const balanceThreshold = 140; // Example threshold
+
+            // Personal CC: Amount Owed is -(sum of transactions)
+            // E.g., spent $50 (-50), spent $20 (-20) -> sum = -70. Owed = 70.
+            // Paid $30 (+30) to card -> sum = -40. Owed = 40.
+            const personalCcOwed = -balances.personal_cc;
+            personalCcBalanceEl.textContent = personalCcOwed.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
             personalCcBalanceEl.classList.remove('balance-ok', 'balance-high');
-            if (personalCcBalance > balanceThreshold) { personalCcBalanceEl.classList.add('balance-high'); } else { personalCcBalanceEl.classList.add('balance-ok'); }
+            if (personalCcOwed > balanceThreshold) { personalCcBalanceEl.classList.add('balance-high'); }
+            else if (personalCcOwed >=0 ) { personalCcBalanceEl.classList.add('balance-ok'); }
+            else { personalCcBalanceEl.classList.add('balance-ok'); /* Credit balance */ }
+
+
             const parentCCLimit = 500;
-            const parentCCBalance = balances.parent_cc;
-            parentCcBalanceEl.childNodes[0].nodeValue = parentCCBalance.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) + ' ';
+            const parentCCOwed = -balances.parent_cc;
+            parentCcBalanceEl.childNodes[0].nodeValue = parentCCOwed.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) + ' ';
             parentCcBalanceEl.classList.remove('balance-ok', 'balance-high');
-            if (parentCCBalance > balanceThreshold) { parentCcBalanceEl.classList.add('balance-high'); } else { parentCcBalanceEl.classList.add('balance-ok'); }
-            const parentCCUsage = parentCCLimit > 0 ? Math.max(0, Math.min(100, (parentCCBalance / parentCCLimit) * 100)) : (parentCCBalance > 0 ? 100 : 0);
+            if (parentCCOwed > balanceThreshold) { parentCcBalanceEl.classList.add('balance-high'); }
+            else if (parentCCOwed >= 0) { parentCcBalanceEl.classList.add('balance-ok'); }
+            else { parentCcBalanceEl.classList.add('balance-ok'); /* Credit balance */ }
+
+
+            const parentCCUsage = parentCCLimit > 0 ? Math.max(0, Math.min(100, (parentCCOwed / parentCCLimit) * 100)) : (parentCCOwed > 0 ? 100 : 0);
             const limitBar = document.getElementById('limitBar-parent_cc');
             limitBar.style.width = `${parentCCUsage}%`;
             limitBar.classList.remove('bg-emerald-500', 'bg-yellow-400', 'bg-red-500', 'bg-orange-500');
-            if (parentCCBalance <= 0) limitBar.classList.add('bg-emerald-500');
+
+            if (parentCCOwed <= 0) limitBar.classList.add('bg-emerald-500'); // Paid off or in credit
             else if (parentCCUsage < 50) limitBar.classList.add('bg-emerald-500');
             else if (parentCCUsage < 80) limitBar.classList.add('bg-yellow-400');
             else if (parentCCUsage <= 100) limitBar.classList.add('bg-orange-500');
-            else limitBar.classList.add('bg-red-500');
+            else limitBar.classList.add('bg-red-500'); // Over limit
         }
         function renderBudgetAndChart() {
             const spending = {};
             let totalSpending = 0;
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
-            // Initialize appBudgets if empty - this should ideally be loaded from Firestore or a config
+
+            // Initialize appBudgets if empty - this is a fixed default for all users for now
+            // Can be moved to Firestore per user later.
             if (Object.keys(appBudgets).length === 0) {
                 appBudgets = { food: 300, transport: 100, entertainment: 150, subscriptions: 50, shopping: 200, bills: 500, rent: 500, other: 100, income: 0 };
             }
 
             for (const category in appBudgets) { if (category !== 'income') spending[category] = 0; }
+
             transactionsData.forEach(t => {
-                const transactionDate = new Date(t.date + 'T00:00:00');
+                const transactionDate = new Date(t.date + (t.date.includes('T') ? '' : 'T00:00:00'));
                 if (t.amount < 0 && transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear) {
                     const category = t.category;
-                    if (category !== 'income') {
-                        spending[category] = (spending[category] || 0) + Math.abs(t.amount);
+                    if (category !== 'income' && spending.hasOwnProperty(category)) { // Ensure category exists in spending obj
+                        spending[category] += Math.abs(t.amount);
                         totalSpending += Math.abs(t.amount);
+                    } else if (category !== 'income' && !spending.hasOwnProperty(category)) {
+                        // Handle transactions with categories not initially in appBudgets (e.g. 'other')
+                        spending[category] = Math.abs(t.amount);
+                        totalSpending += Math.abs(t.amount);
+                        if (!appBudgets[category]) appBudgets[category] = 0; // Add to appBudgets if new category with 0 budget
                     }
                 }
             });
-            const totalBudget = 1800;
+            const totalBudget = Object.values(appBudgets).filter(b => typeof b === 'number').reduce((sum, b) => sum + (b > 0 ? b : 0) , 0) - (appBudgets.income || 0); // Sum all expense budgets
             document.getElementById('monthlySpendingSummary').innerHTML = `${totalSpending.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} <span class="text-lg font-normal text-slate-500">/ ${totalBudget.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} Budget</span>`;
-            const overallBudgetPercent = totalBudget > 0 ? Math.min(100, (totalSpending / totalBudget) * 100) : 0;
+            const overallBudgetPercent = totalBudget > 0 ? Math.min(100, (totalSpending / totalBudget) * 100) : (totalSpending > 0 ? 100 : 0);
             document.getElementById('overallBudgetBar').style.width = `${overallBudgetPercent}%`;
+
             categoryBudgetListElement.innerHTML = '';
             const budgetColors = { food: 'bg-yellow-400', entertainment: 'bg-purple-400', subscriptions: 'bg-pink-400', transport: 'bg-sky-400', shopping: 'bg-blue-400', bills: 'bg-red-400', rent: 'bg-indigo-400', other: 'bg-slate-400' };
+
             for (const category in appBudgets) {
                 if (category === 'income') continue;
                 const spent = spending[category] || 0;
-                const limit = appBudgets[category] || 0;
-                const percent = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+                const limit = appBudgets[category] || 0; // Budget limit for the category
+                const percent = limit > 0 ? Math.min(100, (spent / limit) * 100) : (spent > 0 ? 100 : 0); // If no limit but spent, show 100%
                 const colorClass = budgetColors[category] || 'bg-slate-400';
                 const li = document.createElement('li');
                 li.innerHTML = `
@@ -464,21 +688,28 @@
                     <div class="w-full bg-slate-200 rounded-full h-3"> <div class="${colorClass} h-3 rounded-full transition-all duration-300 ease-out" style="width: ${percent}%"></div></div>`;
                 categoryBudgetListElement.appendChild(li);
             }
+
             const chartLabels = Object.keys(spending).filter(cat => spending[cat] > 0 && cat !== 'income');
             const chartData = chartLabels.map(cat => spending[cat]);
             const chartColors = chartLabels.map(cat => { const colorMap = { food: 'rgba(250, 204, 21, 0.8)', entertainment: 'rgba(192, 132, 252, 0.8)', subscriptions: 'rgba(236, 72, 153, 0.8)', transport: 'rgba(56, 189, 248, 0.8)', shopping: 'rgba(96, 165, 250, 0.8)', bills: 'rgba(248, 113, 113, 0.8)', rent: 'rgba(129, 140, 248, 0.8)', other: 'rgba(148, 163, 184, 0.8)'}; return colorMap[cat] || 'rgba(148, 163, 184, 0.8)'; });
-            spendingPieChart.data.labels = chartLabels.map(l => l.charAt(0).toUpperCase() + l.slice(1));
-            spendingPieChart.data.datasets[0].data = chartData;
-            spendingPieChart.data.datasets[0].backgroundColor = chartColors;
-            spendingPieChart.update();
+
+            if (spendingPieChart && spendingPieChart.data) {
+                spendingPieChart.data.labels = chartLabels.map(l => l.charAt(0).toUpperCase() + l.slice(1));
+                spendingPieChart.data.datasets[0].data = chartData;
+                spendingPieChart.data.datasets[0].backgroundColor = chartColors;
+                spendingPieChart.update();
+            }
         }
         function renderReminders() {
             reminderListElement.innerHTML = '';
             if (remindersData.length === 0) { reminderListElement.innerHTML = '<li class="text-slate-500 italic">No reminders set yet.</li>'; return; }
+
+            const sortedReminders = [...remindersData].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
             const today = new Date(); today.setHours(0, 0, 0, 0);
-            remindersData.forEach(r => {
+
+            sortedReminders.forEach(r => {
                 const li = document.createElement('li'); li.className = 'flex justify-between items-center border-b border-slate-100 pb-3 pt-1 hover:bg-slate-50 px-2 -mx-2 rounded-md';
-                const dueDate = new Date(r.dueDate + 'T00:00:00'); const timeDiff = dueDate.getTime() - today.getTime(); const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                const dueDate = new Date(r.dueDate + (r.dueDate.includes('T') ? '' : 'T00:00:00')); const timeDiff = dueDate.getTime() - today.getTime(); const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
                 let daysText = ''; let daysClass = 'bg-slate-100 text-slate-600';
                 if (daysDiff < 0) { daysText = `Overdue by ${Math.abs(daysDiff)} day(s)`; daysClass = 'bg-red-100 text-red-600'; }
                 else if (daysDiff === 0) { daysText = 'Due Today'; daysClass = 'bg-yellow-100 text-yellow-700'; }
@@ -497,7 +728,25 @@
         }
 
         function renderAll() {
-            console.log("Rendering UI with current data...");
+            if (!currentUserName) {
+                console.log("RenderAll called but no user selected. Clearing lists.");
+                transactionListElement.innerHTML = '<li class="text-slate-500 italic">Please select a user profile.</li>';
+                recentTransactionListElement.innerHTML = '<li class="text-slate-500 italic">Please select a user profile.</li>';
+                categoryBudgetListElement.innerHTML = '';
+                reminderListElement.innerHTML = '<li class="text-slate-500 italic">Please select a user profile.</li>';
+                // Clear dashboard balances and charts too
+                document.getElementById('balance-debit').textContent = '$0.00';
+                personalCcBalanceEl.textContent = '$0.00';
+                parentCcBalanceEl.childNodes[0].nodeValue = '$0.00 ';
+                document.getElementById('monthlySpendingSummary').innerHTML = '$0.00 <span class="text-lg font-normal text-slate-500">/ $1800 Budget</span>';
+                if (spendingPieChart && spendingPieChart.data) {
+                    spendingPieChart.data.labels = [];
+                    spendingPieChart.data.datasets[0].data = [];
+                    spendingPieChart.update();
+                }
+                return;
+            }
+            console.log("Rendering UI with current user data...");
             renderTransactions();
             renderRecentTransactions();
             renderDashboardBalances();
@@ -505,89 +754,118 @@
             renderReminders();
         }
 
-        // Removed Authentication Logic (signInWithGoogle, logoutUser, setupAuthObserver)
+
+        // --- Firestore Listener Management ---
+        function detachFirestoreListeners() {
+            if (unsubscribeTransactions) {
+                unsubscribeTransactions();
+                unsubscribeTransactions = null;
+                console.log("Detached transactions listener.");
+            }
+            if (unsubscribeReminders) {
+                unsubscribeReminders();
+                unsubscribeReminders = null;
+                console.log("Detached reminders listener.");
+            }
+        }
+
+        function setupFirestoreListeners() {
+            detachFirestoreListeners(); // Ensure old listeners are cleared
+
+            if (!currentUserName || !db) {
+                console.warn("Cannot setup Firestore listeners: No current user or DB not initialized.");
+                transactionsData = []; // Clear data if listeners can't be set
+                remindersData = [];
+                renderAll(); // Reflect this cleared state in UI
+                return;
+            }
+
+            const transactionsRef = getUserCollectionRef('transactions');
+            if (transactionsRef) {
+                unsubscribeTransactions = transactionsRef.orderBy('date', 'desc').orderBy('createdAt', 'desc') // Secondary sort by creation if dates are same
+                    .onSnapshot(snapshot => {
+                        transactionsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        console.log(`Firestore transactions for ${currentUserName} updated:`, transactionsData.length);
+                        renderAll(); // Re-render all relevant parts of the UI
+                    }, error => {
+                        console.error(`Error fetching transactions for ${currentUserName}:`, error);
+                        showToast("Error loading transactions.", 5000);
+                        transactionsData = [];
+                        renderAll();
+                    });
+            } else {
+                console.log("Could not get transactionsRef for user:", currentUserName);
+                transactionsData = []; renderAll();
+            }
+
+            const remindersRef = getUserCollectionRef('reminders');
+            if (remindersRef) {
+                unsubscribeReminders = remindersRef.orderBy('dueDate', 'asc')
+                    .onSnapshot(snapshot => {
+                        remindersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        console.log(`Firestore reminders for ${currentUserName} updated:`, remindersData.length);
+                        renderReminders(); // Only re-render reminders list, renderAll might have been called by transactions
+                    }, error => {
+                        console.error(`Error fetching reminders for ${currentUserName}:`, error);
+                        showToast("Error loading reminders.", 5000);
+                        remindersData = [];
+                        renderReminders();
+                    });
+            } else {
+                console.log("Could not get remindersRef for user:", currentUserName);
+                remindersData = []; renderReminders();
+            }
+        }
+
 
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
-            navigateTo(defaultSection);
-            setupChatbot(); // Assuming this is self-contained or doesn't need auth
-            dateInput.valueAsDate = new Date();
+            switchToUserSelectionPage(); // Start with user selection
+            setupChatbot();
+            dateInput.valueAsDate = new Date(); // Set default date for forms
 
-            // Removed Auth button listeners
-
-            // --- Setup Firestore Listeners directly ---
-            if (db) { // Ensure db is initialized
-                // Detach previous listeners if they exist
-                if (unsubscribeTransactions) unsubscribeTransactions();
-                if (unsubscribeReminders) unsubscribeReminders();
-
-                const transactionsRef = getUserCollectionRef('transactions');
-                if (transactionsRef) {
-                    unsubscribeTransactions = transactionsRef.orderBy('date', 'desc')
-                        .onSnapshot(snapshot => {
-                            transactionsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            console.log("Firestore transactions updated via listener:", transactionsData.length);
-                            renderAll();
-                        }, error => {
-                            console.error("Error fetching transactions:", error);
-                            showToast("Error loading transactions.", 5000);
-                            transactionsData = [];
-                            renderAll();
-                        });
-                } else {
-                    console.log("Could not get transactionsRef initially.");
-                    transactionsData = []; // Ensure it's an array for renderAll
-                    renderAll(); // Render empty state
-                }
-
-                const remindersRef = getUserCollectionRef('reminders');
-                if (remindersRef) {
-                    unsubscribeReminders = remindersRef.orderBy('dueDate', 'asc')
-                        .onSnapshot(snapshot => {
-                            remindersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            console.log("Firestore reminders updated via listener:", remindersData.length);
-                            renderReminders(); // Only re-render reminders list
-                        }, error => {
-                            console.error("Error fetching reminders:", error);
-                            showToast("Error loading reminders.", 5000);
-                            remindersData = [];
-                            renderReminders();
-                        });
-                } else {
-                     console.log("Could not get remindersRef initially.");
-                     remindersData = []; // Ensure it's an array for renderReminders
-                     renderReminders(); // Render empty state
-                }
-            } else {
-                console.error("Firestore (db) is not initialized. Data listeners not set up.");
-                showToast("Backend connection error. Data cannot be loaded.", 5000);
-                renderAll(); // Attempt to render with empty data
-            }
+            createUserButton.addEventListener('click', handleCreateUser);
+            newUserNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleCreateUser();
+            });
+            switchUserBtn.addEventListener('click', switchToUserSelectionPage);
         });
 
         transactionForm.addEventListener('submit', (event) => {
             event.preventDefault();
+            if (!currentUserName) { showToast("Please select a user profile first.", 3000); return; }
+
             const formData = new FormData(transactionForm);
             const transaction = Object.fromEntries(formData.entries());
             transaction.amount = parseFloat(transaction.amount);
 
             if (!transaction.date) { showToast('Please select a date.', 3000); return; }
-            if (isNaN(transaction.amount) || transaction.amount === 0) { showToast('Please enter a valid, non-zero amount.', 3000); return; }
-            if (transaction.category === 'income' && transaction.amount < 0) { showToast('Income/Payment amount must be positive.', 3000); amountInput.focus(); return; }
-            if (transaction.category !== 'income' && transaction.amount > 0) { showToast(`Amount for "${transaction.category.replace(/_/g, ' ')}" should be negative. Positive amounts use "Income / CC Payment" category.`, 5000); amountInput.focus(); return; }
+            if (isNaN(transaction.amount)) { showToast('Please enter a valid amount.', 3000); return; } // Allow zero for CC payments
+            // Amount validation:
+            if (transaction.category === 'income' && transaction.amount < 0) {
+                showToast('Income/Payment amount must be positive.', 3000); amountInput.focus(); return;
+            }
+            // For expenses, amount should be negative. For CC payments to personal_cc/parent_cc with "income" category, amount is positive.
+            if (transaction.category !== 'income' && transaction.amount > 0) {
+                showToast(`Amount for expense category "${transaction.category.replace(/_/g, ' ')}" should be negative.`, 5000);
+                amountInput.focus(); return;
+            }
 
-            const currentEditingId = transactionIdInput.value;
-            if (currentEditingId && editingTransactionId === currentEditingId) {
+
+            const currentEditingId = transactionIdInput.value; // This is the hidden input
+            if (currentEditingId && editingTransactionId === currentEditingId) { // Ensure we are truly editing the one loaded
                 transaction.id = currentEditingId;
                 updateTransactionInFirestore(transaction);
             } else {
-                delete transaction.transactionId;
+                // delete transaction.transactionId; // Field name of hidden input, ensure not in data
                 addTransactionToFirestore(transaction);
             }
         });
 
         reminderForm.addEventListener('submit', (event) => {
             event.preventDefault();
+            if (!currentUserName) { showToast("Please select a user profile first.", 3000); return; }
+
             const formData = new FormData(reminderForm);
             const reminder = Object.fromEntries(formData.entries());
 
@@ -598,18 +876,17 @@
                 reminder.id = currentEditingId;
                 updateReminderInFirestore(reminder);
             } else {
-                delete reminder.reminderId;
+                // delete reminder.reminderId;
                 addReminderToFirestore(reminder);
             }
         });
 
-        // Function to populate form for editing a transaction
-        window.editTransaction = (id) => { // Make it global for inline onclick
+        window.editTransaction = (id) => {
             const transaction = transactionsData.find(t => t.id === id);
             if (transaction) {
-                resetTransactionForm(); // Clear form first
-                editingTransactionId = id;
-                transactionIdInput.value = id;
+                resetTransactionForm();
+                editingTransactionId = id; // Set context for update
+                transactionIdInput.value = id; // Populate hidden field for submission check
                 descriptionInput.value = transaction.description;
                 amountInput.value = transaction.amount;
                 categorySelect.value = transaction.category;
@@ -625,77 +902,82 @@
             }
         };
 
-        // Function to populate form for editing a reminder
-        window.editReminder = (id) => { // Make it global for inline onclick
+        window.editReminder = (id) => {
             const reminder = remindersData.find(r => r.id === id);
             if (reminder) {
                 resetReminderForm();
                 editingReminderId = id;
                 reminderIdInput.value = id;
                 reminderDescriptionInput.value = reminder.description;
-                reminderDueDateInput.value = reminder.dueDate; // Assumes date is 'YYYY-MM-DD'
+                reminderDueDateInput.value = reminder.dueDate;
                 reminderFormTitle.textContent = 'Edit Reminder';
                 saveReminderButton.textContent = 'Update Reminder';
                 saveReminderButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
                 saveReminderButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-                toggleReminderForm(true); // Show the form
+                toggleReminderForm(true);
                 reminderDescriptionInput.focus();
             }
         };
 
 
         // --- Chart.js Initialization ---
-        const ctx = document.getElementById('spendingPieChart').getContext('2d');
-        const spendingPieChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: { labels: [], datasets: [{ label: 'Spending', data: [], backgroundColor: [], borderColor: ['#FFFFFF'], borderWidth: 2 }] },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            font: { size: 11 }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) { label += ': '; }
-                                if (context.parsed !== null) {
-                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed);
+        let spendingPieChart; // Declare globally
+        try {
+            const ctx = document.getElementById('spendingPieChart').getContext('2d');
+            spendingPieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ label: 'Spending', data: [], backgroundColor: [], borderColor: ['#FFFFFF'], borderWidth: 2 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Allow more flexibility with size
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 15, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed);
+                                    }
+                                    return label;
                                 }
-                                return label;
                             }
                         }
-                    }
-                },
-                cutout: '65%'
-            }
-        });
+                    },
+                    cutout: '65%'
+                }
+            });
+        } catch(e) {
+            console.error("Chart.js initialization failed (likely no canvas on user selection page):", e);
+            // This is expected if the canvas isn't visible/available during initial script parse
+        }
 
-        // --- Chatbot Logic (Simulation - unchanged) ---
+
+        // --- Chatbot Logic (Simulation - unchanged, self-contained) ---
         function setupChatbot() {
             const chatbox = document.getElementById('chatbox');
             const chatInput = document.getElementById('chatInput');
             const sendChatButton = document.getElementById('sendChat');
+
+            if(!chatbox || !chatInput || !sendChatButton) {
+                console.warn("Chatbot elements not found. Chatbot setup skipped.");
+                return;
+            }
 
             const addMessageToChatbox = (message, isUser = false) => {
                 const bubble = document.createElement('div');
                 bubble.classList.add('chat-bubble', isUser ? 'chat-bubble-user' : 'chat-bubble-bot');
                 bubble.textContent = message;
                 chatbox.appendChild(bubble);
-                chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll to bottom
+                chatbox.scrollTop = chatbox.scrollHeight;
             };
 
             const getBotResponse = (userInput) => {
                 userInput = userInput.toLowerCase();
                 if (userInput.includes("hello") || userInput.includes("hi")) return "Hello there! How can I assist with your finances today?";
                 if (userInput.includes("save money") || userInput.includes("saving tips")) return "Great question! For students in Boston, try these: \n1. Cook more meals at home. \n2. Use student discounts (MBTA pass, museums, shops). \n3. Look for free campus events for entertainment. \n4. Track your spending weekly using this app's budget feature!";
-                if (userInput.includes("budget")) return "You can manage your budgets in the 'Budget' section. Set limits for categories like food, transport, and entertainment to stay on track.";
+                if (userInput.includes("budget")) return "You can manage your budgets in the 'Budget' section. Set limits for categories like food, transport, and entertainment to stay on track. The current app uses a shared budget template.";
                 if (userInput.includes("credit card") && userInput.includes("parent")) return "Using your parent's credit card responsibly is key. Make sure to track expenses, pay back what you owe promptly, and stay under the agreed limit to build trust and good financial habits.";
                 if (userInput.includes("credit score")) return "Improve your credit score by: \n1. Paying all bills on time. \n2. Keeping credit card balances low (below 30% of your limit is good). \n3. Avoiding opening too many new credit accounts at once. \n4. Regularly checking your credit report for errors.";
                 if (userInput.includes("emergency fund")) return "An emergency fund is crucial! Start small, even $10-$20 per paycheck, and build up to cover 3-6 months of essential living expenses. This can prevent debt if unexpected costs arise.";
@@ -710,7 +992,7 @@
                 if (userInput) {
                     addMessageToChatbox(userInput, true);
                     chatInput.value = '';
-                    setTimeout(() => { // Simulate bot thinking
+                    setTimeout(() => {
                         const botResponse = getBotResponse(userInput);
                         addMessageToChatbox(botResponse, false);
                     }, 600);
@@ -724,7 +1006,6 @@
                 }
             });
         }
-
     </script>
 
 </body>
