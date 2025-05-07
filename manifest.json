@@ -3,6 +3,7 @@
   "short_name": "SNG Finance",
   "description": "A Progressive Web App to manage finances for Boston students.",
   "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
