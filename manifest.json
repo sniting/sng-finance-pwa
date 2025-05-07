@@ -1,21 +1,20 @@
 {
-  "name": "SNG Finance",
+  "name": "SNG Finance - Boston Student Finances",
   "short_name": "SNG Finance",
-  "description": "Personal finance management app for international students in Boston.",
-  "start_url": ".",
+  "description": "A Progressive Web App to manage finances for Boston students.",
+  "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#ffffff",
   "theme_color": "#4f46e5",
-  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "images/icon-192.png",
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "images/icon-512.png",
+      "src": "icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
