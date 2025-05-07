@@ -835,26 +835,3 @@
 </body>
 </html>
 ```
-
-After replacing the script:
-
-1.  **Hard Refresh:** Do a hard refresh of your browser (Ctrl+Shift+R or Cmd+Shift+R) to ensure the new JavaScript is loaded.
-2.  **Open Developer Console.**
-3.  **Test:**
-    * Select your user (e.g., "Nitin").
-    * Try to add a transaction.
-    * **Observe the console output closely.** Look for:
-        * "Attempting to add transaction: ..." (should show the data).
-        * "Transaction added successfully to Firestore with ID: ..." (if the write works).
-        * Any Firebase errors.
-        * "Transactions snapshot received for Nitin. Doc count: ..." (if the listener gets data).
-        * "Processed transactionsData: ..." (should show the array of transactions).
-4.  **Check Firestore Console:** Immediately after the "Transaction added!" toast, check the `users/Nitin/transactions` subcollection in the Firebase console to see if the document was actually created there.
-
-Please report back with:
-
-* **Any error messages from the browser console.**
-* **Whether the transaction document appears in the Firestore console under `users/YourUserName/transactions/`** (even if it doesn't show in the app).
-* The console logs that appear during the process.
-
-This will give us much more information to work wi
