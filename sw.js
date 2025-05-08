@@ -1,171 +1,117 @@
-// sw.js (Simplified)
-
-const CACHE_VERSION = 3; // Increment version to force update
-const CACHE_NAME = `sng-finance-cache-v${CACHE_VERSION}`;
-const APP_SHELL_URLS = [
-  '/', // Root path
-  '/index.html', // Main HTML file
+const CACHE_NAME = 'sng-finance-cache-v1'; // Increment cache version on updates
+const urlsToCache = [
+  '/', // Cache the root URL (your index.html)
+  '/index.html', // Explicitly cache index.html
   '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
-  // Add other essential local assets if any (e.g., '/style.css')
+  '/sw.js', // Cache the service worker itself
+  // Add paths to all your essential CSS, JS, and other assets
+  // Ensure correct paths relative to the service worker's scope
+  'https://cdn.tailwindcss.com',
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js',
+  // Add paths to your own JS files, CSS files, icons, etc.
+  // Example: '/css/style.css', '/js/app.js', '/icons/icon-192x192.png'
 ];
 
-// Install event: cache the app shell.
-self.addEventListener('install', event => {
-  console.log(`SW V${CACHE_VERSION}: Install event`);
+self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log(`SW V${CACHE_VERSION}: Caching app shell`);
-        // Important: Cache essential files needed for the app to load initially.
-        // Use fetch with cache: 'reload' to bypass browser cache during install
-        const cachePromises = APP_SHELL_URLS.map(url => {
-            return fetch(new Request(url, { cache: 'reload' }))
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Request for ${url} failed with status ${response.status}`);
-                    }
-                    return cache.put(url, response);
-                })
-                .catch(err => console.warn(`SW V${CACHE_VERSION}: Failed to cache ${url}`, err));
+      .then((cache) => {
+        console.log('Service Worker: Caching app shell');
+        // Use event.request.url for debugging if needed
+        return cache.addAll(urlsToCache).catch(error => {
+            console.error('Service Worker: Failed to cache some URLs:', error);
+            // Log which URL failed for debugging
+            Promise.all(urlsToCache.map(url =>
+              fetch(url).then(response => {
+                if (!response.ok) {
+                  console.error(`Failed to fetch ${url}: ${response.status}`);
+                }
+                return response;
+              }).catch(err => {
+                console.error(`Failed to fetch ${url}: ${err}`);
+              })
+            ));
+            throw error; // Re-throw to fail the install if critical assets are missing
         });
-        return Promise.all(cachePromises);
       })
-      .then(() => {
-        console.log(`SW V${CACHE_VERSION}: App shell cached. Installation complete.`);
-        return self.skipWaiting(); // Activate worker immediately
-      })
-      .catch(error => {
-        console.error(`SW V${CACHE_VERSION}: Installation failed`, error);
-      })
+      .then(() => self.skipWaiting()) // Activate the new service worker immediately
   );
 });
 
-// Activate event: remove old caches.
-self.addEventListener('activate', event => {
-  console.log(`SW V${CACHE_VERSION}: Activate event`);
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activating...');
+  // Remove old caches
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map(cacheName => {
+        cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log(`SW V${CACHE_VERSION}: Deleting old cache: ${cacheName}`);
+            console.log('Service Worker: Deleting old cache', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => {
-      console.log(`SW V${CACHE_VERSION}: Activation complete.`);
-      return self.clients.claim(); // Take control of clients
-    })
+    }).then(() => self.clients.claim()) // Take control of uncontrolled clients
   );
 });
 
-// Fetch event: Serve app shell from cache, network for others.
-// Fallback to index.html for navigation requests.
-self.addEventListener('fetch', event => {
-  const request = event.request;
-  const requestUrl = new URL(request.url);
-
-  // Ignore non-GET requests and Firestore API calls
-  if (request.method !== 'GET' || requestUrl.hostname.includes('firestore.googleapis.com')) {
-    // Let the browser handle it
-    return;
-  }
-
-  // For navigation requests (opening the app or navigating between pages)
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request) // Try network first for navigation
-        .catch(() => {
-          // Network failed, serve index.html from cache
-          console.log(`SW V${CACHE_VERSION}: Network fetch failed for navigation, serving /index.html from cache.`);
-          return caches.match('/index.html', { cacheName: CACHE_NAME });
-        })
-    );
-    return;
-  }
-
-  // For non-navigation requests (assets like CSS, JS, images)
-  event.respondWith(
-    caches.match(request, { cacheName: CACHE_NAME })
-      .then(cachedResponse => {
-        // Return cached response if found
-        if (cachedResponse) {
-          // console.log(`SW V${CACHE_VERSION}: Serving from cache: ${requestUrl.pathname}`);
-          return cachedResponse;
+self.addEventListener('fetch', (event) => {
+  //console.log('Service Worker: Fetching', event.request.url); // Log fetches for debugging
+   event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        // Cache hit - return cached response
+        if (response) {
+          //console.log('Service Worker: Found in cache', event.request.url);
+          return response;
         }
 
-        // Not in cache, fetch from network
-        // console.log(`SW V${CACHE_VERSION}: Fetching from network: ${requestUrl.pathname}`);
-        return fetch(request).then(networkResponse => {
-            // Don't cache opaque responses (e.g., from CDNs without CORS) unless necessary
-            if (networkResponse.type === 'opaque') {
-                return networkResponse;
+        // No cache hit - fetch from network
+        console.log('Service Worker: Not in cache, fetching from network', event.request.url);
+        return fetch(event.request)
+          .then((response) => {
+            // Check if we received a valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              // Don't cache opaque responses or error responses
+               console.log('Service Worker: Invalid response received for', event.request.url);
+              return response;
             }
 
-            // Cache the fetched response if it's valid
-            if (networkResponse && networkResponse.ok) {
-                const responseToCache = networkResponse.clone();
-                caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, responseToCache);
-                });
-            }
-            return networkResponse;
-        }).catch(error => {
-            console.error(`SW V${CACHE_VERSION}: Network fetch failed for ${requestUrl.pathname}`, error);
-            // Optionally return a fallback placeholder for assets like images
-        });
+             // Clone the response because it's a stream and can only be consumed once
+            const responseToCache = response.clone();
+
+            // Cache the new response (optional, for a cache-then-network or stale-while-revalidate)
+            // This basic example uses cache-first for cached assets, network-only for others.
+            // For dynamic content or new pages, you might want to cache successful network responses.
+            // For this 404 issue on initial load, ensuring the *app shell* is cached is key.
+            // If you want to cache new network requests:
+            // caches.open(CACHE_NAME)
+            //   .then((cache) => {
+            //     cache.put(event.request, responseToCache);
+            //   });
+
+            return response;
+          })
+          .catch((error) => {
+            // Network request failed. Check if it's the main page and serve a fallback if available.
+            console.error('Service Worker: Fetch failed for', event.request.url, error);
+
+            // If the request is for the main HTML file and it's not cached,
+            // you might serve an offline fallback page.
+            // This requires caching an 'offline.html' file during install.
+             if (event.request.mode === 'navigate' && event.request.destination === 'document') {
+                 // Example: return caches.match('/offline.html');
+                 // For a basic fix of the initial 404, ensuring '/' is cached is enough.
+                 // Returning nothing here will result in the browser's default offline page or error.
+             }
+
+             throw error; // Re-throw the error so the browser knows the fetch failed
+          });
       })
-  );
+   );
 });
-```
 
-**2. Address the Firestore Index Error**
-
-Your console clearly shows: `Error fetching transactions for nitin: {"code":"failed-precondition","name":"FirebaseError"} Firestore requires a composite index for this query.`
-
-This means the query `transactionsRef.orderBy('date', 'desc').orderBy('createdAt', 'desc')` **needs** a composite index.
-
-* **Go to your Firebase Console.**
-* Navigate to **Build > Firestore Database > Indexes**.
-* Click on the **"Composite"** tab.
-* Click **"Create Index"**.
-* **Collection ID:** Enter `transactions`
-* **Fields to index:**
-    * Add field: `date`, Order: **Descending**
-    * Add field: `createdAt`, Order: **Descending**
-* **Query scopes:** Select **Collection group** (This is important because your `transactions` collections are nested under each user document).
-* Click **"Create"**.
-
-It will take a few minutes for the index to build. You can monitor its status in the Firebase console.
-
-**3. Re-enable the Second `orderBy` in `index.html`**
-
-*Once the index is built and enabled in Firebase*, go back to your `index.html` file (`finance_pwa_html_v5` or whichever is current) and find the `setupFirestoreListeners` function. Uncomment the second `orderBy`:
-
-```javascript
-            // Inside setupFirestoreListeners function...
-            if (transactionsRef) {
-                unsubscribeTransactions = transactionsRef
-                    .orderBy('date', 'desc')
-                    .orderBy('createdAt', 'desc') // <-- UNCOMMENT THIS LINE
-                    .onSnapshot(snapshot => {
-                       // ... rest of snapshot handling
-                    }, error => {
-                       // ... rest of error handling
-                    });
-            } //...
-```
-
-**Testing Steps (After completing 1, 2, and 3):**
-
-1.  **Upload/Deploy:** Ensure the updated `sw.js` and `index.html` (with the re-enabled `orderBy`) are deployed.
-2.  **Clear Cache/Data and Unregister SW:** On your testing device (iPad/iPhone), *thoroughly* remove the old PWA icon, clear website data for your site in Safari settings, and close Safari.
-3.  **Open in Safari:** Load the URL.
-4.  **Check Console:** Look for successful Service Worker registration (`ServiceWorker registration successful`) and check if the Firestore "failed-precondition" error for transactions is gone.
-5.  **Add to Home Screen.**
-6.  **Launch from Home Screen:** It should now launch without the 404 error and load transactions correctly (using the index).
-
-This combination of a simpler, more robust service worker and creating the necessary Firestore index should resolve both the 404 launch error and the transaction loading err
+// Optional: Handle push notifications, background sync, etc.
