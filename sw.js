@@ -1,117 +1,157 @@
-const CACHE_NAME = 'sng-finance-cache-v1'; // Increment cache version on updates
+// sw.js - Service Worker for SNG Finance PWA
+
+const CACHE_NAME = 'sng-finance-cache-v1';
+// Add URLs of essential files to cache initially
 const urlsToCache = [
-  '/', // Cache the root URL (your index.html)
-  '/index.html', // Explicitly cache index.html
+  '/', // Cache the root (index.html)
+  '/index.html',
   '/manifest.json',
-  '/sw.js', // Cache the service worker itself
-  // Add paths to all your essential CSS, JS, and other assets
-  // Ensure correct paths relative to the service worker's scope
+  // Add CSS and JS files
+  '/images/icon-192.png',
+  '/images/icon-512.png',
+  // Cache external resources
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js',
-  // Add paths to your own JS files, CSS files, icons, etc.
-  // Example: '/css/style.css', '/js/app.js', '/icons/icon-192x192.png'
+  'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js'
 ];
 
-self.addEventListener('install', (event) => {
+// Install event: Cache essential assets
+self.addEventListener('install', event => {
   console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
+      .then(cache => {
         console.log('Service Worker: Caching app shell');
-        // Use event.request.url for debugging if needed
-        return cache.addAll(urlsToCache).catch(error => {
-            console.error('Service Worker: Failed to cache some URLs:', error);
-            // Log which URL failed for debugging
-            Promise.all(urlsToCache.map(url =>
-              fetch(url).then(response => {
-                if (!response.ok) {
-                  console.error(`Failed to fetch ${url}: ${response.status}`);
-                }
-                return response;
-              }).catch(err => {
-                console.error(`Failed to fetch ${url}: ${err}`);
-              })
-            ));
-            throw error; // Re-throw to fail the install if critical assets are missing
+        // Use individual caching to allow partial success
+        const cachePromises = urlsToCache.map(urlToCache => {
+            return cache.add(urlToCache).catch(err => {
+                console.warn(`Service Worker: Failed to cache ${urlToCache}`, err);
+            });
         });
+        return Promise.all(cachePromises);
       })
-      .then(() => self.skipWaiting()) // Activate the new service worker immediately
+      .then(() => {
+        console.log('Service Worker: Install completed, skipping waiting.');
+        return self.skipWaiting();
+      })
   );
 });
 
-self.addEventListener('activate', (event) => {
+// Activate event: Clean up old caches
+self.addEventListener('activate', event => {
   console.log('Service Worker: Activating...');
-  // Remove old caches
+  const cacheWhitelist = [CACHE_NAME]; // Only keep the current cache
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker: Deleting old cache', cacheName);
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Service Worker: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim()) // Take control of uncontrolled clients
+    }).then(() => {
+        console.log('Service Worker: Claiming clients.');
+        return self.clients.claim();
+    })
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  //console.log('Service Worker: Fetching', event.request.url); // Log fetches for debugging
-   event.respondWith(
+// Create a simple offline page for fallback
+const offlineResponse = new Response(
+  `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNG Finance - Offline</title>
+    <style>
+      body { font-family: sans-serif; text-align: center; padding: 20px; }
+      h1 { color: #4f46e5; }
+    </style>
+  </head>
+  <body>
+    <h1>SNG Finance</h1>
+    <p>You appear to be offline. Please check your internet connection.</p>
+    <button onclick="window.location.reload()">Try Again</button>
+  </body>
+  </html>`,
+  {
+    headers: { 'Content-Type': 'text/html' }
+  }
+);
+
+// Fetch event: Updated strategy to improve PWA navigation
+self.addEventListener('fetch', event => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+  
+  // Handle navigation requests specially - important for PWA functionality
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // If navigation fails, serve index.html from cache if available
+        return caches.match('/index.html')
+          .then(cachedIndex => {
+            if (cachedIndex) {
+              console.log('Service Worker: Serving cached index.html for navigation');
+              return cachedIndex;
+            }
+            // As a last resort, show the offline page
+            console.log('Service Worker: Serving offline page');
+            return offlineResponse;
+          });
+      })
+    );
+    return;
+  }
+
+  // Standard cache-first strategy for other requests
+  event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return cached response
+      .then(response => {
+        // Cache hit - return response
         if (response) {
-          //console.log('Service Worker: Found in cache', event.request.url);
           return response;
         }
 
-        // No cache hit - fetch from network
-        console.log('Service Worker: Not in cache, fetching from network', event.request.url);
-        return fetch(event.request)
-          .then((response) => {
+        // Not in cache - fetch from network
+        return fetch(event.request.clone()).then(
+          networkResponse => {
             // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              // Don't cache opaque responses or error responses
-               console.log('Service Worker: Invalid response received for', event.request.url);
-              return response;
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
             }
 
-             // Clone the response because it's a stream and can only be consumed once
-            const responseToCache = response.clone();
+            // Clone the response
+            const responseToCache = networkResponse.clone();
 
-            // Cache the new response (optional, for a cache-then-network or stale-while-revalidate)
-            // This basic example uses cache-first for cached assets, network-only for others.
-            // For dynamic content or new pages, you might want to cache successful network responses.
-            // For this 404 issue on initial load, ensuring the *app shell* is cached is key.
-            // If you want to cache new network requests:
-            // caches.open(CACHE_NAME)
-            //   .then((cache) => {
-            //     cache.put(event.request, responseToCache);
-            //   });
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
 
-            return response;
-          })
-          .catch((error) => {
-            // Network request failed. Check if it's the main page and serve a fallback if available.
-            console.error('Service Worker: Fetch failed for', event.request.url, error);
-
-            // If the request is for the main HTML file and it's not cached,
-            // you might serve an offline fallback page.
-            // This requires caching an 'offline.html' file during install.
-             if (event.request.mode === 'navigate' && event.request.destination === 'document') {
-                 // Example: return caches.match('/offline.html');
-                 // For a basic fix of the initial 404, ensuring '/' is cached is enough.
-                 // Returning nothing here will result in the browser's default offline page or error.
-             }
-
-             throw error; // Re-throw the error so the browser knows the fetch failed
-          });
+            return networkResponse;
+          }
+        ).catch(error => {
+          console.error('Service Worker: Fetch failed; returning offline fallback if appropriate.', error);
+          // For image requests, return a placeholder or fallback
+          if (event.request.destination === 'image') {
+            // You could return a placeholder image here
+            return caches.match('/images/icon-192.png');
+          }
+          
+          // If it's an HTML request, serve the offline page
+          if (event.request.headers.get('accept').includes('text/html')) {
+            return offlineResponse;
+          }
+          
+          // Otherwise, let the error propagate
+          throw error;
+        });
       })
-   );
+  );
 });
-
-// Optional: Handle push notifications, background sync, etc.
