@@ -95,6 +95,55 @@
     <div id="toast-notification"></div>
 
     <script>
+        // Add this near the beginning of your script section in index.html
+
+// Function to check PWA cache status
+async function checkPwaReadiness() {
+    try {
+        // First check if service worker is active
+        if (!('serviceWorker' in navigator)) {
+            console.log('Service Workers not supported');
+            return false;
+        }
+        
+        if (!navigator.serviceWorker.controller) {
+            console.log('No active service worker found');
+            return false;
+        }
+        
+        // Then check if critical resources are cached
+        const cache = await caches.open('sng-finance-cache-v2');
+        if (!cache) {
+            console.log('Cache storage not found');
+            return false;
+        }
+        
+        // Check for critical cached resources
+        const indexHtml = await cache.match('/index.html');
+        
+        if (!indexHtml) {
+            console.log('Critical resource /index.html not found in cache');
+            return false;
+        }
+        
+        console.log('PWA is ready - critical resources are cached');
+        return true;
+    } catch (error) {
+        console.error('Error checking PWA readiness:', error);
+        return false;
+    }
+}
+
+// This will run when a PWA is launched and ensure everything is ready
+if (window.matchMedia('(display-mode: standalone)').matches) {
+    // App is running as installed PWA
+    checkPwaReadiness().then(isReady => {
+        if (!isReady && navigator.onLine) {
+            console.log('PWA cache not ready, but we are online - will build cache');
+            // No need to show error message - service worker will cache resources
+        }
+    });
+}
         // --- Global Variables & Constants ---
         const sections = document.querySelectorAll('.app-section');
         const navItems = document.querySelectorAll('.nav-item');
