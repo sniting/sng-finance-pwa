@@ -184,6 +184,9 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 
         // --- PWA Service Worker Registration ---
         // Updated service worker registration that won't show the offline message incorrectly
+// Replace your current service worker registration code with this improved version
+// that won't show any error messages
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' })
@@ -202,11 +205,14 @@ if ('serviceWorker' in navigator) {
                 });
             })
             .catch(err => {
+                // Just log errors to console - don't show to user
                 console.error('ServiceWorker registration failed:', err);
-                // Only show error if we're online - if we're offline, this is expected
-                if (navigator.onLine) {
-                    showToast('PWA functionality may be limited. Reload if needed.', 5000);
-                }
+                
+                // Importantly - DON'T show any toast messages here
+                // The previous code was showing this error message:
+                // showToast('PWA functionality may be limited. Reload if needed.', 5000);
+                
+                // Instead, just silently log the error
             });
     });
     
@@ -215,11 +221,56 @@ if ('serviceWorker' in navigator) {
         if (event.data && event.data.type) {
             console.log('Message from service worker:', event.data);
             
+            // Only show user-facing messages for important updates
             if (event.data.type === 'CACHE_UPDATED') {
-                showToast('App updated! Reload for latest version.', 5000);
+                console.log('App updated! Reload for latest version.');
+                // Optionally show a toast, but it's better to be silent:
+                // showToast('App updated! Reload for latest version.', 5000);
             }
         }
     });
+}
+
+// Modify the offline initialization function
+function initializeOfflineMode() {
+    // Check if we're online and update the UI accordingly
+    function updateOnlineStatus() {
+        const isOnline = navigator.onLine;
+        console.log('Network status changed. Online:', isOnline);
+        
+        // Only show a message when going back online, not when going offline
+        // This avoids unnecessary disruption
+        if (isOnline) {
+            console.log('You are back online!');
+            // Optionally show a toast, but it might be better to be silent
+            // showToast('You are back online!', 3000);
+        } else {
+            console.log('You are offline. Some features may be limited.');
+            // Don't show any toast - the user already knows they're offline
+        }
+    }
+
+    // Set up event listeners for online/offline events
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    // Initial check on page load - just log, don't show toast
+    if (!navigator.onLine) {
+        console.log('App loaded in offline mode');
+    }
+    
+    // When an installed PWA launches, check if service worker is ready
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('Application launched as PWA');
+        
+        // If service worker is ready, initialize cache
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            console.log('Service worker controller found - app should work offline');
+        } else {
+            console.log('No service worker controller - offline functionality may be limited');
+            // Don't show toast - this is expected the first time the PWA is launched
+        }
+    }
 }
         // --- Toast Notification ---
         const toastElement = document.getElementById('toast-notification');
