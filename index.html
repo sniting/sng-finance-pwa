@@ -818,7 +818,51 @@ if ('serviceWorker' in navigator) {
                 }
             });
         }
+// Add this script to your index.html, right before the closing </body> tag
 
+// Initialize offline mode handling
+function initializeOfflineMode() {
+    // Check if we're online and update the UI accordingly
+    function updateOnlineStatus() {
+        const isOnline = navigator.onLine;
+        console.log('Network status changed. Online:', isOnline);
+        
+        // If we went offline, show a notification but don't disrupt the app
+        if (!isOnline) {
+            showToast('You are offline. Some features may be limited.', 5000);
+        } else {
+            showToast('You are back online!', 3000);
+            // Optionally refresh data from Firebase here
+        }
+    }
+
+    // Set up event listeners for online/offline events
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    // Initial check on page load
+    if (!navigator.onLine) {
+        console.log('App loaded in offline mode');
+        // Don't show toast immediately on load if offline - it's disruptive
+        // Instead, just log it and let the app work with cached data
+    }
+    
+    // When an installed PWA launches, check if service worker is ready
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('Application launched as PWA');
+        
+        // If service worker is ready, initialize cache
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            console.log('Service worker controller found - app should work offline');
+        } else {
+            console.log('No service worker controller - offline functionality may be limited');
+            // Don't show toast - this is expected the first time the PWA is launched
+        }
+    }
+}
+
+// Call the function after the page has loaded
+window.addEventListener('load', initializeOfflineMode);
     </script>
 
 </body>
