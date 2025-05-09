@@ -134,14 +134,18 @@
         }
 
         // --- PWA Service Worker Registration ---
-        if ('serviceWorker' in navigator) {
+        // Updated service worker registration that won't show the offline message incorrectly
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' })
             .then(reg => {
                 console.log('ServiceWorker registration successful. Scope:', reg.scope);
                 
                 // Check for updates to the service worker
-                reg.update();
+                reg.update().catch(err => {
+                    console.warn('Service worker update check failed:', err);
+                    // Don't show toast to user - this is a background process
+                });
                 
                 // Handle controller change (when a new service worker takes over)
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -150,8 +154,10 @@
             })
             .catch(err => {
                 console.error('ServiceWorker registration failed:', err);
-                // Show error to user
-                showToast('App may not work offline. Please reload.', 5000);
+                // Only show error if we're online - if we're offline, this is expected
+                if (navigator.onLine) {
+                    showToast('PWA functionality may be limited. Reload if needed.', 5000);
+                }
             });
     });
     
@@ -166,7 +172,6 @@
         }
     });
 }
-
         // --- Toast Notification ---
         const toastElement = document.getElementById('toast-notification');
         let toastTimeout;
