@@ -122,12 +122,37 @@
 
         // --- PWA Service Worker Registration ---
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js') // Assuming sw.js is at the root
-                    .then(reg => console.log('ServiceWorker registration successful:', reg.scope))
-                    .catch(err => console.log('ServiceWorker registration failed:', err));
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(reg => {
+                console.log('ServiceWorker registration successful. Scope:', reg.scope);
+                
+                // Check for updates to the service worker
+                reg.update();
+                
+                // Handle controller change (when a new service worker takes over)
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    console.log('New service worker controller activated');
+                });
+            })
+            .catch(err => {
+                console.error('ServiceWorker registration failed:', err);
+                // Show error to user
+                showToast('App may not work offline. Please reload.', 5000);
             });
+    });
+    
+    // Listen for service worker messages
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type) {
+            console.log('Message from service worker:', event.data);
+            
+            if (event.data.type === 'CACHE_UPDATED') {
+                showToast('App updated! Reload for latest version.', 5000);
+            }
         }
+    });
+}
 
         // --- Toast Notification ---
         const toastElement = document.getElementById('toast-notification');
