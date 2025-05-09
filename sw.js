@@ -56,6 +56,97 @@ self.addEventListener('install', event => {
 });
 
 // Activate event: Clean up old caches and claim clients
+// Add this code to your service worker (sw.js) to clear icon caches
+
+// In the activate event handler, add this specific cache clearing code
+self.addEventListener('activate', event => {
+  console.log('Service Worker: Activating...');
+  const cacheWhitelist = [CACHE_NAME]; // Only keep the current cache version
+  
+  event.waitUntil(
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheWhitelist.indexOf(cacheName) === -1) {
+              console.log('Service Worker: Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      
+      // Force clear any cached icon resources
+      caches.open(CACHE_NAME).then(cache => {
+        return cache.keys().then(requests => {
+          const iconRequests = requests.filter(request => 
+            request.url.includes('icon-') && 
+            request.url.includes('.png')
+          );
+          
+          return Promise.all(
+            iconRequests.map(request => {
+              console.log('Service Worker: Removing cached icon:', request.url);
+              return cache.delete(request);
+            })
+          );
+        });
+      }),
+      
+      // Take control of all open clients immediately
+      self.clients.claim().then(() => {
+        console.log('Service Worker: Claimed all clients');
+      })
+    ])
+  );
+});
+
+// Add this function to manually clear icon caches
+function clearIconCaches() {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      action: 'clearIconCache'
+    });
+    console.log('Sent clear icon cache request to service worker');
+  }
+}
+
+// Add this message handler to sw.js
+self.addEventListener('message', event => {
+  if (event.data && event.data.action === 'clearIconCache') {
+    console.log('Service Worker: Received request to clear icon cache');
+    
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.keys().then(requests => {
+        const iconRequests = requests.filter(request => 
+          request.url.includes('icon-') && 
+          request.url.includes('.png')
+        );
+        
+        return Promise.all(
+          iconRequests.map(request => {
+            console.log('Service Worker: Clearing cached icon:', request.url);
+            return cache.delete(request);
+          })
+        );
+      });
+    }).then(() => {
+      // Notify clients that cache was cleared
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'ICONS_CLEARED'
+          });
+        });
+      });
+    });
+  }
+  
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
 self.addEventListener('activate', event => {
   console.log('Service Worker: Activating...');
   const cacheWhitelist = [CACHE_NAME]; // Only keep the current cache version
