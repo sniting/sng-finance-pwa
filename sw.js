@@ -3,12 +3,12 @@
 const CACHE_NAME = 'sng-finance-cache-v1';
 // Add URLs of essential files to cache initially
 const urlsToCache = [
-  '/', // Cache the root (index.html)
+  '/', 
   '/index.html',
   '/manifest.json',
-  // Add CSS and JS files
-  '/images/icon-192.png',
-  '/images/icon-512.png',
+  // Fix icon paths to match actual paths in your manifest
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
   // Cache external resources
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
@@ -109,6 +109,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Special handling for the root path which might be caught by navigate above but just in case
+  if (event.request.url.match(/\/$/) || event.request.url.endsWith('/index.html')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/index.html')
+          .then(cachedIndex => {
+            if (cachedIndex) return cachedIndex;
+            return offlineResponse;
+          });
+      })
+    );
+    return;
+  }
+
   // Standard cache-first strategy for other requests
   event.respondWith(
     caches.match(event.request)
@@ -141,11 +155,11 @@ self.addEventListener('fetch', event => {
           // For image requests, return a placeholder or fallback
           if (event.request.destination === 'image') {
             // You could return a placeholder image here
-            return caches.match('/images/icon-192.png');
+            return caches.match('/icons/icon-192x192.png');
           }
           
           // If it's an HTML request, serve the offline page
-          if (event.request.headers.get('accept').includes('text/html')) {
+          if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
             return offlineResponse;
           }
           
