@@ -71,10 +71,29 @@
     <header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
         <div class="flex justify-between items-center max-w-6xl mx-auto px-4">
             <h1 class="text-xl font-semibold text-center tracking-wide flex-grow">SNG Finance</h1>
+            <button id="logout-button" class="hidden bg-white text-indigo-600 font-medium px-3 py-1 rounded">Logout</button>
             </div>
     </header>
 
-    <main class="p-5">
+<div id="auth-section" class="p-5">
+  <form id="login-form" class="space-y-4">
+    <h2 class="text-lg font-semibold">Login</h2>
+    <input id="login-username" type="text" placeholder="Username" class="w-full border p-2 rounded">
+    <input id="login-password" type="password" placeholder="Password" class="w-full border p-2 rounded">
+    <label class="inline-flex items-center"><input id="remember-day" type="checkbox" class="mr-2"> Remember for the day</label>
+    <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded">Login</button>
+    <p class="text-center"><a href="#" id="show-register" class="text-indigo-600">Create an account</a></p>
+  </form>
+  <form id="register-form" class="space-y-4 hidden mt-6">
+    <h2 class="text-lg font-semibold">Create Account</h2>
+    <input id="register-nickname" type="text" placeholder="Nick name" class="w-full border p-2 rounded">
+    <input id="register-username" type="text" placeholder="Username (optional)" class="w-full border p-2 rounded">
+    <input id="register-password" type="password" placeholder="Password" class="w-full border p-2 rounded">
+    <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded">Sign Up</button>
+    <p class="text-center"><a href="#" id="show-login" class="text-indigo-600">Back to login</a></p>
+  </form>
+</div>
+    <main class="p-5 hidden">
         <section id="dashboard" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Dashboard</h2> <div class="grid grid-cols-1 md:grid-cols-3 gap-5"> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-emerald-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Debit Card</h3> </div> <p id="balance-debit" class="text-3xl font-bold text-slate-800">$0.00</p> <p class="text-sm text-slate-500 mt-1">Available Balance</p> </div> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Personal Credit Card</h3> </div> <p id="balance-personal_cc" class="text-3xl font-bold balance-ok">$0.00</p> <p class="text-sm text-slate-500 mt-1">Amount Owed</p> </div> <div class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-200"> <div class="flex items-center mb-3"> <svg class="h-6 w-6 text-purple-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> <h3 class="font-semibold text-slate-700">Parent's Credit Card</h3> </div> <p id="balance-parent_cc" class="text-3xl font-bold balance-ok">$0.00 <span class="text-base font-normal text-slate-500">/ $500 Limit</span></p> <p class="text-sm text-slate-500 mt-1">Amount Owed</p> <div class="w-full bg-slate-200 rounded-full h-3 mt-3"> <div id="limitBar-parent_cc" class="h-3 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div> </div> </div> </div> <div class="flex justify-around space-x-4 mt-8"> <button onclick="prepareTransactionForm('income')" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out transform hover:-translate-y-0.5">Add Income</button> <button onclick="prepareTransactionForm('expense')" class="flex-1 text-center bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out transform hover:-translate-y-0.5">Add Expense</button> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mt-8"> <h3 class="font-semibold text-slate-700 mb-4">Recent Transactions</h3> <ul id="recentTransactionList" class="space-y-3"> <li class="text-slate-500 italic">No transactions yet.</li> </ul> <button class="text-indigo-600 hover:text-indigo-700 mt-4 text-sm font-medium w-full text-center" onclick="navigateTo('transactions')">View All Transactions</button> </div> </section>
         <section id="transactions" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Manage Transactions</h2> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 id="transactionFormTitle" class="text-lg font-semibold text-slate-800 mb-4">Add New Transaction</h3> <form id="addTransactionForm" class="space-y-4"> <input type="hidden" id="transactionId" name="transactionId"> <div> <label for="description" class="block text-sm font-medium text-slate-700 mb-1">Description</label> <input type="text" id="description" name="description" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <div> <label for="amount" class="block text-sm font-medium text-slate-700 mb-1">Amount</label> <input type="number" id="amount" name="amount" step="0.01" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Income is positive, Expense is negative"> </div> <div> <label for="category" class="block text-sm font-medium text-slate-700 mb-1">Category</label> <select id="category" name="category" required class="block w-full px-3 py-2 border border-slate-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> <option value="food">Food</option> <option value="transport">Transport</option> <option value="entertainment">Entertainment</option> <option value="subscriptions">Subscriptions</option> <option value="shopping">Shopping</option> <option value="bills">Bills</option> <option value="rent">Rent</option> <option value="income">Income / CC Payment</option> <option value="other">Other Expense</option> </select> </div> <div> <label for="account" class="block text-sm font-medium text-slate-700 mb-1">Account</label> <select id="account" name="account" required class="block w-full px-3 py-2 border border-slate-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> <option value="debit">Debit Card</option> <option value="personal_cc">Personal Credit Card</option> <option value="parent_cc">Parent's Credit Card</option> </select> </div> <div> <label for="date" class="block text-sm font-medium text-slate-700 mb-1">Date</label> <input type="date" id="date" name="date" required class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <button id="saveTransactionBtn" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-3">Save Transaction</button> <button id="cancelEditBtn" type="button" onclick="resetTransactionForm()" class="w-full bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out mt-2 hidden">Cancel Edit</button> </form> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="text-lg font-semibold text-slate-800 mb-4">History</h3> <ul id="transactionList" class="space-y-4"> <li class="text-slate-500 italic">No transactions recorded yet.</li> </ul> </div> </section>
         <section id="budget" class="app-section space-y-6"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">Budget Tracker</h2> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-3">Monthly Expenses</h3> <p id="monthlySpendingSummary" class="text-3xl font-bold text-slate-800">$0.00 <span class="text-lg font-normal text-slate-500">/ $1800 Budget</span></p> <div class="w-full bg-slate-200 rounded-full h-4 mt-4"> <div id="overallBudgetBar" class="bg-blue-500 h-4 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div> </div> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-4 text-center">Expense Breakdown</h3> <div class="w-full max-w-xs mx-auto"> <canvas id="spendingPieChart"></canvas> </div> </div> <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200"> <h3 class="font-semibold text-slate-700 mb-4">Category Budgets</h3> <ul id="categoryBudgetList" class="space-y-5"></ul> <button class="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-lg border border-slate-300 transition duration-200 ease-in-out">Manage Budgets (Future)</button> </div> </section>
@@ -83,7 +102,7 @@
         <section id="chatbot" class="app-section space-y-5"> <h2 class="text-2xl font-semibold text-slate-900 mb-5">AI Financial Assistant</h2> <div id="chatbox" class="h-96 overflow-y-auto border border-slate-200 p-4 rounded-xl bg-white shadow-sm space-y-4 flex flex-col"> <div class="chat-bubble chat-bubble-bot">Hello! Ask me how to save money...</div> </div> <div class="flex space-x-3"> <input type="text" id="chatInput" class="flex-grow px-4 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ask me anything..."> <button id="sendChat" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:shadow-lg transition duration-200 ease-in-out">Send</button> </div> </section>
     </main>
 
-    <nav id="bottom-nav" class="grid grid-cols-6 border-t border-slate-200">
+    <nav id="bottom-nav" class="hidden grid grid-cols-6 border-t border-slate-200">
         <button onclick="navigateTo('dashboard')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="dashboard"> <svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg><span class="text-xs font-medium">Home</span></button>
         <button onclick="navigateTo('transactions')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="transactions"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg><span class="text-xs font-medium">History</span></button>
         <button onclick="navigateTo('budget')" class="nav-item flex flex-col items-center justify-center py-2 px-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-200" data-target="budget"><svg class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg><span class="text-xs font-medium">Budget</span></button>
@@ -182,6 +201,119 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             showToast("Error connecting to backend.", 5000);
         }
 
+        // --- Simple Authentication ---
+        const authSection = document.getElementById('auth-section');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const showRegisterLink = document.getElementById('show-register');
+        const showLoginLink = document.getElementById('show-login');
+        const logoutButton = document.getElementById('logout-button');
+
+        function showAuth() {
+            authSection.classList.remove('hidden');
+            document.querySelector('main').classList.add('hidden');
+            logoutButton.classList.add('hidden');
+        }
+        function showApp() {
+            authSection.classList.add('hidden');
+            document.querySelector('main').classList.remove('hidden');
+            logoutButton.classList.remove('hidden');
+        }
+
+        function saveRemember(username) {
+            const expiry = new Date();
+            expiry.setHours(23,59,59,999);
+            localStorage.setItem('rememberUser', JSON.stringify({ username, expiry: expiry.getTime() }));
+        }
+        function loadRemember() {
+            const item = localStorage.getItem('rememberUser');
+            if (!item) return null;
+            const data = JSON.parse(item);
+            if (Date.now() > data.expiry) { localStorage.removeItem('rememberUser'); return null; }
+            return data.username;
+        }
+
+        function getStoredAccounts() {
+            const data = localStorage.getItem('localAccounts');
+            return data ? JSON.parse(data) : {};
+        }
+        function saveStoredAccounts(acc) {
+            localStorage.setItem('localAccounts', JSON.stringify(acc));
+        }
+
+        async function loginUser(username, password, remember) {
+            try {
+                let account;
+                if (db) {
+                    const doc = await db.collection('userAccounts').doc(username).get();
+                    if (!doc.exists) { showToast('User not found'); return; }
+                    if (doc.data().password !== password) { showToast('Incorrect password'); return; }
+                    account = doc.data();
+                } else {
+                    const accounts = getStoredAccounts();
+                    if (!accounts[username]) { showToast('User not found'); return; }
+                    if (accounts[username].password !== password) { showToast('Incorrect password'); return; }
+                    account = accounts[username];
+                }
+                currentUserId = username;
+                if (remember) saveRemember(username); else localStorage.removeItem('rememberUser');
+                showApp();
+                setupFirestoreListeners();
+            } catch (e) { console.error(e); showToast('Login error'); }
+        }
+
+        async function createAccount(nick, username, password) {
+            username = username || nick;
+            try {
+                if (db) {
+                    await db.collection('userAccounts').doc(username).set({ nickname: nick, username, password });
+                } else {
+                    const accounts = getStoredAccounts();
+                    if (accounts[username]) { showToast('Account already exists'); return; }
+                    accounts[username] = { nickname: nick, password };
+                    saveStoredAccounts(accounts);
+                }
+                showToast('Account created. Please log in.');
+                registerForm.reset();
+                showAuthForms(true);
+            } catch (e) { console.error(e); showToast('Account creation failed'); }
+        }
+
+        function logoutUser() {
+            if (unsubscribeTransactions) unsubscribeTransactions();
+            if (unsubscribeReminders) unsubscribeReminders();
+            currentUserId = null;
+            localStorage.removeItem('rememberUser');
+            showAuth();
+        }
+
+        function showAuthForms(isLogin) {
+            if (isLogin) {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+            }
+        }
+
+        showRegisterLink.addEventListener('click', (e) => { e.preventDefault(); showAuthForms(false); });
+        showLoginLink.addEventListener('click', (e) => { e.preventDefault(); showAuthForms(true); });
+        logoutButton.addEventListener('click', logoutUser);
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('login-username').value.trim();
+            const pass = document.getElementById('login-password').value;
+            const remember = document.getElementById('remember-day').checked;
+            if (user && pass) loginUser(user, pass, remember);
+        });
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nick = document.getElementById('register-nickname').value.trim();
+            const user = document.getElementById('register-username').value.trim();
+            const pass = document.getElementById('register-password').value;
+            if (nick && pass) createAccount(nick, user || nick, pass);
+        });
         // --- PWA Service Worker Registration ---
         // Updated service worker registration that won't show the offline message incorrectly
 // Replace your current service worker registration code with this improved version
@@ -374,7 +506,7 @@ function initializeOfflineMode() {
         }
 
         // --- Firebase Data Functions ---
-        const GENERIC_USER_ID = "sharedUserData"; // Static ID for single-user mode
+        let currentUserId = null;
 
         function getUserCollectionRef(collectionName) {
             if (!db) {
@@ -383,8 +515,8 @@ function initializeOfflineMode() {
                 return null;
             }
             // All data will be stored under the generic user ID path
-            console.log(`Accessing Firestore path: users/${GENERIC_USER_ID}/${collectionName}`); // Log path
-            return db.collection('users').doc(GENERIC_USER_ID).collection(collectionName);
+            console.log(`Accessing Firestore path: users/${currentUserId}/${collectionName}`); // Log path
+            return db.collection('users').doc(currentUserId).collection(collectionName);
         }
 
         async function addTransactionToFirestore(transaction) {
@@ -690,15 +822,8 @@ function initializeOfflineMode() {
             renderReminders();
         }
 
-        // --- Event Listeners ---
-        document.addEventListener('DOMContentLoaded', () => {
-            navigateTo(defaultSection); // Go directly to dashboard
-            setupChatbot();
-            dateInput.valueAsDate = new Date();
-
-            // --- Setup Firestore Listeners directly for single user ---
-            if (db) { // Ensure db is initialized
-                // Detach previous listeners if they exist (e.g., from hot reloads)
+        function setupFirestoreListeners() {
+            if (db && currentUserId) {
                 if (unsubscribeTransactions) unsubscribeTransactions();
                 if (unsubscribeReminders) unsubscribeReminders();
 
@@ -707,16 +832,16 @@ function initializeOfflineMode() {
                     unsubscribeTransactions = transactionsRef.orderBy('date', 'desc')
                         .onSnapshot(snapshot => {
                             transactionsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            console.log("Firestore transactions updated via listener:", transactionsData.length);
+                            console.log('Firestore transactions updated via listener:', transactionsData.length);
                             renderAll();
                         }, error => {
-                            console.error("Error fetching transactions:", error);
+                            console.error('Error fetching transactions:', error);
                             showToast(`Error loading transactions: ${error.message}`, 5000);
                             transactionsData = [];
                             renderAll();
                         });
                 } else {
-                    console.log("Could not get transactionsRef initially.");
+                    console.log('Could not get transactionsRef initially.');
                     transactionsData = []; renderAll();
                 }
 
@@ -725,22 +850,36 @@ function initializeOfflineMode() {
                     unsubscribeReminders = remindersRef.orderBy('dueDate', 'asc')
                         .onSnapshot(snapshot => {
                             remindersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            console.log("Firestore reminders updated via listener:", remindersData.length);
-                            renderReminders(); // Only re-render reminders list
+                            console.log('Firestore reminders updated via listener:', remindersData.length);
+                            renderReminders();
                         }, error => {
-                            console.error("Error fetching reminders:", error);
+                            console.error('Error fetching reminders:', error);
                             showToast(`Error loading reminders: ${error.message}`, 5000);
                             remindersData = [];
                             renderReminders();
                         });
                 } else {
-                    console.log("Could not get remindersRef initially.");
+                    console.log('Could not get remindersRef initially.');
                     remindersData = []; renderReminders();
                 }
             } else {
-                console.error("Firestore (db) is not initialized. Data listeners not set up.");
-                showToast("Backend connection error. Data cannot be loaded.", 5000);
-                renderAll(); // Attempt to render with empty data
+                console.error('Firestore (db) is not initialized or user not logged in. Data listeners not set up.');
+                showToast('Backend connection error. Data cannot be loaded.', 5000);
+                renderAll();
+            }
+        }
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            navigateTo(defaultSection);
+            setupChatbot();
+            dateInput.valueAsDate = new Date();
+            const remembered = loadRemember();
+            if (remembered) {
+                currentUserId = remembered;
+                showApp();
+                setupFirestoreListeners();
+            } else {
+                showAuth();
             }
         });
 
@@ -966,4 +1105,4 @@ window.addEventListener('load', initializeOfflineMode);
     </script>
 
 </body>
-</ht
+</html>
