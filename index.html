@@ -24,6 +24,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <style>
         /* Styles remain largely the same - omitted for brevity */
         body { font-family: 'Inter', sans-serif; overscroll-behavior: contain; background-color: #f8fafc; }
@@ -188,6 +189,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
         // --- Initialize Firebase ---
         let app;
         let db;
+        let auth;
         try {
             if (!firebase.apps.length) {
                 app = firebase.initializeApp(firebaseConfig);
@@ -195,7 +197,8 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
                 app = firebase.app();
             }
             db = firebase.firestore();
-            console.log("Firebase initialized (App and Firestore only)");
+            auth = firebase.auth();
+            console.log("Firebase initialized (App, Firestore, Auth)");
         } catch (error) {
             console.error("Error initializing Firebase:", error);
             showToast("Error connecting to backend.", 5000);
@@ -223,26 +226,6 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             bottomNav.classList.remove('hidden');
         }
 
-        function saveRemember(username) {
-            const expiry = new Date();
-            expiry.setHours(23,59,59,999);
-            localStorage.setItem('rememberUser', JSON.stringify({ username, expiry: expiry.getTime() }));
-        }
-        function loadRemember() {
-            const item = localStorage.getItem('rememberUser');
-            if (!item) return null;
-            const data = JSON.parse(item);
-            if (Date.now() > data.expiry) { localStorage.removeItem('rememberUser'); return null; }
-            return data.username;
-        }
-
-        function getStoredAccounts() {
-            const data = localStorage.getItem('localAccounts');
-            return data ? JSON.parse(data) : {};
-        }
-        function saveStoredAccounts(acc) {
-            localStorage.setItem('localAccounts', JSON.stringify(acc));
-        }
 
         // --- Local Storage Fallback for User Data ---
         function getLocalCollection(name) {
@@ -273,62 +256,26 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             saveLocalCollection(name, items);
         }
 
-        async function loginUser(username, password, remember) {
+        async function loginUser(email, password) {
             try {
-                let account;
-                if (db) {
-                    try {
-                        const doc = await db.collection('userAccounts').doc(username).get();
-                        if (!doc.exists) { showToast('User not found'); return; }
-                        if (doc.data().password !== password) { showToast('Incorrect password'); return; }
-                        account = doc.data();
-                    } catch (e) {
-                        console.warn('Firestore login failed, falling back to local storage', e);
-                        const accounts = getStoredAccounts();
-                        if (!accounts[username]) { showToast('User not found'); return; }
-                        if (accounts[username].password !== password) { showToast('Incorrect password'); return; }
-                        account = accounts[username];
-                    }
-                } else {
-                    const accounts = getStoredAccounts();
-                    if (!accounts[username]) { showToast('User not found'); return; }
-                    if (accounts[username].password !== password) { showToast('Incorrect password'); return; }
-                    account = accounts[username];
-                }
-                currentUserId = username;
-                if (remember) saveRemember(username); else localStorage.removeItem('rememberUser');
-                showApp();
-                setupFirestoreListeners();
-            } catch (e) { console.error(e); showToast('Login error'); }
+                await auth.signInWithEmailAndPassword(email, password);
+                currentUserId = auth.currentUser.uid;
+            } catch (e) {
+                console.error(e);
+                showToast('Login error');
+            }
         }
 
-        async function createAccount(nick, username, password) {
-            username = username || nick;
-            const saveLocalAccount = () => {
-                const accounts = getStoredAccounts();
-                if (accounts[username]) { showToast('Account already exists'); return false; }
-                accounts[username] = { nickname: nick, password };
-                saveStoredAccounts(accounts);
-                return true;
-            };
+        async function createAccount(nick, email, password) {
             try {
-                if (db) {
-                    await db.collection('userAccounts').doc(username).set({ nickname: nick, username, password });
-                } else {
-                    if (!saveLocalAccount()) return;
-                }
+                const cred = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection('users').doc(cred.user.uid).set({ nickname: nick, email });
                 showToast('Account created. Please log in.');
                 registerForm.reset();
                 showAuthForms(true);
             } catch (e) {
                 console.error(e);
-                if (saveLocalAccount()) {
-                    showToast('Account created locally. Please log in.');
-                    registerForm.reset();
-                    showAuthForms(true);
-                } else {
-                    showToast('Account creation failed');
-                }
+                showToast('Account creation failed');
             }
         }
 
@@ -336,9 +283,18 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             if (unsubscribeTransactions) unsubscribeTransactions();
             if (unsubscribeReminders) unsubscribeReminders();
             currentUserId = null;
-            localStorage.removeItem('rememberUser');
-            showAuth();
+            auth.signOut();
         }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUserId = user.uid;
+                showApp();
+                setupFirestoreListeners();
+            } else {
+                showAuth();
+            }
+        });
 
         function showAuthForms(isLogin) {
             if (isLogin) {
@@ -355,17 +311,16 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
         logoutButton.addEventListener('click', logoutUser);
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const user = document.getElementById('login-username').value.trim();
+            const email = document.getElementById('login-username').value.trim();
             const pass = document.getElementById('login-password').value;
-            const remember = document.getElementById('remember-day').checked;
-            if (user && pass) loginUser(user, pass, remember);
+            if (email && pass) loginUser(email, pass);
         });
         registerForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const nick = document.getElementById('register-nickname').value.trim();
-            const user = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-username').value.trim();
             const pass = document.getElementById('register-password').value;
-            if (nick && pass) createAccount(nick, user || nick, pass);
+            if (nick && email && pass) createAccount(nick, email, pass);
         });
         // --- PWA Service Worker Registration ---
         // Updated service worker registration that won't show the offline message incorrectly
@@ -977,14 +932,7 @@ function initializeOfflineMode() {
             navigateTo(defaultSection);
             setupChatbot();
             dateInput.valueAsDate = new Date();
-            const remembered = loadRemember();
-            if (remembered) {
-                currentUserId = remembered;
-                showApp();
-                setupFirestoreListeners();
-            } else {
-                showAuth();
-            }
+            showAuth();
         });
 
         transactionForm.addEventListener('submit', (event) => {
