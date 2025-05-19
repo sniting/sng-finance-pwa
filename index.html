@@ -270,9 +270,11 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, password);
                 await db.collection('users').doc(cred.user.uid).set({ nickname: nick, email });
-                showToast('Account created. Please log in.');
+                currentUserId = cred.user.uid;
+                showApp();
+                setupFirestoreListeners();
+                showToast('Welcome!');
                 registerForm.reset();
-                showAuthForms(true);
             } catch (e) {
                 console.error(e);
                 showToast('Account creation failed');
