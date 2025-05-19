@@ -79,7 +79,7 @@
 <div id="auth-section" class="p-5">
   <form id="login-form" class="space-y-4">
     <h2 class="text-lg font-semibold">Login</h2>
-    <input id="login-username" type="text" placeholder="Username" class="w-full border p-2 rounded">
+    <input id="login-email" type="text" placeholder="Email address" class="w-full border p-2 rounded">
     <input id="login-password" type="password" placeholder="Password" class="w-full border p-2 rounded">
     <label class="inline-flex items-center"><input id="remember-day" type="checkbox" class="mr-2"> Remember for the day</label>
     <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded">Login</button>
@@ -88,7 +88,7 @@
   <form id="register-form" class="space-y-4 hidden mt-6">
     <h2 class="text-lg font-semibold">Create Account</h2>
     <input id="register-nickname" type="text" placeholder="Nick name" class="w-full border p-2 rounded">
-    <input id="register-username" type="text" placeholder="Username (optional)" class="w-full border p-2 rounded">
+    <input id="register-email" type="text" placeholder="Email address" class="w-full border p-2 rounded">
     <input id="register-password" type="password" placeholder="Password" class="w-full border p-2 rounded">
     <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded">Sign Up</button>
     <p class="text-center"><a href="#" id="show-login" class="text-indigo-600">Back to login</a></p>
@@ -262,7 +262,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
                 currentUserId = auth.currentUser.uid;
             } catch (e) {
                 console.error(e);
-                showToast('Login error');
+                showToast(e.message);
             }
         }
 
@@ -275,7 +275,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
                 showAuthForms(true);
             } catch (e) {
                 console.error(e);
-                showToast('Account creation failed');
+                showToast(e.message);
             }
         }
 
@@ -311,14 +311,14 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
         logoutButton.addEventListener('click', logoutUser);
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('login-username').value.trim();
+            const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-password').value;
             if (email && pass) loginUser(email, pass);
         });
         registerForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const nick = document.getElementById('register-nickname').value.trim();
-            const email = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
             const pass = document.getElementById('register-password').value;
             if (nick && email && pass) createAccount(nick, email, pass);
         });
