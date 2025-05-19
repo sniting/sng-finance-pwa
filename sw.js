@@ -9,6 +9,13 @@ const urlsToCache = [
   // Fix icon paths to match actual paths in your manifest
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  "/scripts/main.js",
+  "/scripts/firebase.js",
+  "/scripts/auth.js",
+  "/scripts/transactions.js",
+  "/scripts/reminders.js",
+  "/scripts/charts.js",
+  "/scripts/ui.js",
   // Cache external resources
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
