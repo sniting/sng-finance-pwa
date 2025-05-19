@@ -147,31 +147,6 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
 });
-self.addEventListener('activate', event => {
-  console.log('Service Worker: Activating...');
-  const cacheWhitelist = [CACHE_NAME]; // Only keep the current cache version
-  
-  event.waitUntil(
-    Promise.all([
-      // Clean up old caches
-      caches.keys().then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (cacheWhitelist.indexOf(cacheName) === -1) {
-              console.log('Service Worker: Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      }),
-      
-      // Take control of all open clients immediately
-      self.clients.claim().then(() => {
-        console.log('Service Worker: Claimed all clients');
-      })
-    ])
-  );
-});
 
 // Create offline page content
 const offlineHTML = `<!DOCTYPE html>
@@ -319,9 +294,3 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Add message handler to communicate with the main page
-self.addEventListener('message', event => {
-  if (event.data && event.data.action === 'skipWaiting') {
-    self.skipWaiting();
-  }
-});
