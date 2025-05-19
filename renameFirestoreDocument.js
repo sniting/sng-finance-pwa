@@ -12,25 +12,25 @@
 // of your data before executing and test thoroughly in a non-production
 // environment first.
 
-const admin = require('firebase-admin');
-const path = require('path');
+const admin = require("firebase-admin");
+const path = require("path");
 
 // Resolve service account path
 const serviceAccountPath = process.env.SERVICE_ACCOUNT || process.argv[2];
 if (!serviceAccountPath) {
-  console.error('Service account key file path must be provided.');
+  console.error("Service account key file path must be provided.");
   process.exit(1);
 }
 
 admin.initializeApp({
-  credential: admin.credential.cert(require(path.resolve(serviceAccountPath)))
+  credential: admin.credential.cert(require(path.resolve(serviceAccountPath))),
 });
 
 const db = admin.firestore();
 
 // Source and destination document paths
-const SRC_PATH = 'users/sharedUserData';
-const DEST_PATH = 'users/nitin';
+const SRC_PATH = "users/sharedUserData";
+const DEST_PATH = "users/nitin";
 
 /**
  * Recursively copy a document and all of its subcollections.
@@ -77,7 +77,7 @@ async function deleteDocumentWithSubcollections(docRef) {
 
   console.log(`Copying ${SRC_PATH} -> ${DEST_PATH}`);
   await copyDocument(srcRef, destRef);
-  console.log('Copy complete. Deleting original document...');
+  console.log("Copy complete. Deleting original document...");
   await deleteDocumentWithSubcollections(srcRef);
-  console.log('Original document deleted.');
+  console.log("Original document deleted.");
 })();
