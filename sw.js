@@ -7,8 +7,8 @@ const urlsToCache = [
   '/index.html',
   '/manifest.json',
   // Fix icon paths to match actual paths in your manifest
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/icon-192x192.png',
+  '/icon-512x512.png',
   // Cache external resources
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
@@ -273,7 +273,7 @@ self.addEventListener('fetch', event => {
             
             // For image requests, return a cached placeholder
             if (event.request.destination === 'image') {
-              return caches.match('/icons/icon-192x192.png')
+            return caches.match('/icon-192x192.png')
                 .then(placeholderImage => {
                   if (placeholderImage) return placeholderImage;
                   // If no placeholder, just propagate the error
