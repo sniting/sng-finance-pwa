@@ -257,6 +257,9 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             try {
                 await auth.signInWithEmailAndPassword(email, password);
                 currentUserId = auth.currentUser.uid;
+                // Immediately show the application on successful login
+                showApp();
+                setupFirestoreListeners();
             } catch (e) {
                 console.error(e);
                 showToast(e.message);
