@@ -25,6 +25,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <!-- Load Firebase configuration (not committed) -->
+    <script src="firebaseConfig.js"></script>
     <style>
         /* Styles remain largely the same - omitted for brevity */
         body { font-family: 'Inter', sans-serif; overscroll-behavior: contain; background-color: #f8fafc; }
@@ -176,15 +178,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
         let unsubscribeTransactions = null;
         let unsubscribeReminders = null;
 
-        // --- Firebase Config (Replace with your actual config) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBiGFtbpGto5ZtyliohDkgUyEawKfQFeOk", // Replace with your actual API key
-            authDomain: "boston-student-finance.firebaseapp.com",
-            projectId: "boston-student-finance",
-            storageBucket: "boston-student-finance.appspot.com", // Corrected: was .appspot.com, should be .app
-            messagingSenderId: "547176457645",
-            appId: "1:547176457645:web:f3dc7064ba8b94ac5d2d24"
-        };
+        // --- Firebase Config is provided via firebaseConfig.js ---
 
         // --- Initialize Firebase ---
         let app;
