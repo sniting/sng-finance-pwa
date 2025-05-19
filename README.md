@@ -23,3 +23,10 @@ The file `firebaseConfig.js` is listed in `.gitignore` so it will not be committ
 ## Development
 
 Open `index.html` in a browser or serve the directory with a simple HTTP server.
+
+## Card Management
+
+The app now supports managing a list of payment cards. Logged in users can add,
+rename or delete cards from the **Cards** section. Changes are saved
+automatically when the card name input loses focus. The list is stored in the
+`cards` collection under each user's document in Firestore.
