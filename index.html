@@ -245,10 +245,18 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             try {
                 let account;
                 if (db) {
-                    const doc = await db.collection('userAccounts').doc(username).get();
-                    if (!doc.exists) { showToast('User not found'); return; }
-                    if (doc.data().password !== password) { showToast('Incorrect password'); return; }
-                    account = doc.data();
+                    try {
+                        const doc = await db.collection('userAccounts').doc(username).get();
+                        if (!doc.exists) { showToast('User not found'); return; }
+                        if (doc.data().password !== password) { showToast('Incorrect password'); return; }
+                        account = doc.data();
+                    } catch (e) {
+                        console.warn('Firestore login failed, falling back to local storage', e);
+                        const accounts = getStoredAccounts();
+                        if (!accounts[username]) { showToast('User not found'); return; }
+                        if (accounts[username].password !== password) { showToast('Incorrect password'); return; }
+                        account = accounts[username];
+                    }
                 } else {
                     const accounts = getStoredAccounts();
                     if (!accounts[username]) { showToast('User not found'); return; }
