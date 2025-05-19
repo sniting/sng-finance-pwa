@@ -256,6 +256,11 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             saveLocalCollection(name, items);
         }
 
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
         async function loginUser(email, password) {
             try {
                 await auth.signInWithEmailAndPassword(email, password);
@@ -313,6 +318,10 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             e.preventDefault();
             const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-password').value;
+            if (!isValidEmail(email)) {
+                showToast('Please enter a valid email');
+                return;
+            }
             if (email && pass) loginUser(email, pass);
         });
         registerForm.addEventListener('submit', (e) => {
@@ -320,6 +329,10 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
             const nick = document.getElementById('register-nickname').value.trim();
             const email = document.getElementById('register-email').value.trim();
             const pass = document.getElementById('register-password').value;
+            if (!isValidEmail(email)) {
+                showToast('Please enter a valid email');
+                return;
+            }
             if (nick && email && pass) createAccount(nick, email, pass);
         });
         // --- PWA Service Worker Registration ---
