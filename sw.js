@@ -112,39 +112,39 @@ function clearIconCaches() {
   }
 }
 
-// Add this message handler to sw.js
+// Single message handler for service worker actions
 self.addEventListener('message', event => {
-  if (event.data && event.data.action === 'clearIconCache') {
-    console.log('Service Worker: Received request to clear icon cache');
-    
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.keys().then(requests => {
-        const iconRequests = requests.filter(request => 
-          request.url.includes('icon-') && 
-          request.url.includes('.png')
-        );
-        
-        return Promise.all(
-          iconRequests.map(request => {
-            console.log('Service Worker: Clearing cached icon:', request.url);
-            return cache.delete(request);
-          })
-        );
-      });
-    }).then(() => {
-      // Notify clients that cache was cleared
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'ICONS_CLEARED'
+  if (!event.data || !event.data.action) return;
+
+  switch (event.data.action) {
+    case 'clearIconCache':
+      console.log('Service Worker: Received request to clear icon cache');
+      caches.open(CACHE_NAME)
+        .then(cache => cache.keys())
+        .then(requests => {
+          const iconRequests = requests.filter(request =>
+            request.url.includes('icon-') && request.url.includes('.png')
+          );
+          return Promise.all(
+            iconRequests.map(request => {
+              console.log('Service Worker: Clearing cached icon:', request.url);
+              return cache.delete(request);
+            })
+          );
+        })
+        .then(() => {
+          // Notify clients that cache was cleared
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client =>
+              client.postMessage({ type: 'ICONS_CLEARED' })
+            );
           });
         });
-      });
-    });
-  }
-  
-  if (event.data && event.data.action === 'skipWaiting') {
-    self.skipWaiting();
+      break;
+
+    case 'skipWaiting':
+      self.skipWaiting();
+      break;
   }
 });
 self.addEventListener('activate', event => {
@@ -319,9 +319,3 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Add message handler to communicate with the main page
-self.addEventListener('message', event => {
-  if (event.data && event.data.action === 'skipWaiting') {
-    self.skipWaiting();
-  }
-});
