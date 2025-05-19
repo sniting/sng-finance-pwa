@@ -208,16 +208,19 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
         const logoutButton = document.getElementById('logout-button');
+        const bottomNav = document.getElementById('bottom-nav');
 
         function showAuth() {
             authSection.classList.remove('hidden');
             document.querySelector('main').classList.add('hidden');
             logoutButton.classList.add('hidden');
+            bottomNav.classList.add('hidden');
         }
         function showApp() {
             authSection.classList.add('hidden');
             document.querySelector('main').classList.remove('hidden');
             logoutButton.classList.remove('hidden');
+            bottomNav.classList.remove('hidden');
         }
 
         function saveRemember(username) {
