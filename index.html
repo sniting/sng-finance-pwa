@@ -415,48 +415,6 @@ if ('serviceWorker' in navigator) {
         }
     });
 }
-
-// Modify the offline initialization function
-function initializeOfflineMode() {
-    // Check if we're online and update the UI accordingly
-    function updateOnlineStatus() {
-        const isOnline = navigator.onLine;
-        console.log('Network status changed. Online:', isOnline);
-        
-        // Only show a message when going back online, not when going offline
-        // This avoids unnecessary disruption
-        if (isOnline) {
-            console.log('You are back online!');
-            // Optionally show a toast, but it might be better to be silent
-            // showToast('You are back online!', 3000);
-        } else {
-            console.log('You are offline. Some features may be limited.');
-            // Don't show any toast - the user already knows they're offline
-        }
-    }
-
-    // Set up event listeners for online/offline events
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    
-    // Initial check on page load - just log, don't show toast
-    if (!navigator.onLine) {
-        console.log('App loaded in offline mode');
-    }
-    
-    // When an installed PWA launches, check if service worker is ready
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        console.log('Application launched as PWA');
-        
-        // If service worker is ready, initialize cache
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            console.log('Service worker controller found - app should work offline');
-        } else {
-            console.log('No service worker controller - offline functionality may be limited');
-            // Don't show toast - this is expected the first time the PWA is launched
-        }
-    }
-}
         // --- Toast Notification ---
         const toastElement = document.getElementById('toast-notification');
         let toastTimeout;
