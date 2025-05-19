@@ -264,19 +264,32 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 
         async function createAccount(nick, username, password) {
             username = username || nick;
+            const saveLocalAccount = () => {
+                const accounts = getStoredAccounts();
+                if (accounts[username]) { showToast('Account already exists'); return false; }
+                accounts[username] = { nickname: nick, password };
+                saveStoredAccounts(accounts);
+                return true;
+            };
             try {
                 if (db) {
                     await db.collection('userAccounts').doc(username).set({ nickname: nick, username, password });
                 } else {
-                    const accounts = getStoredAccounts();
-                    if (accounts[username]) { showToast('Account already exists'); return; }
-                    accounts[username] = { nickname: nick, password };
-                    saveStoredAccounts(accounts);
+                    if (!saveLocalAccount()) return;
                 }
                 showToast('Account created. Please log in.');
                 registerForm.reset();
                 showAuthForms(true);
-            } catch (e) { console.error(e); showToast('Account creation failed'); }
+            } catch (e) {
+                console.error(e);
+                if (saveLocalAccount()) {
+                    showToast('Account created locally. Please log in.');
+                    registerForm.reset();
+                    showAuthForms(true);
+                } else {
+                    showToast('Account creation failed');
+                }
+            }
         }
 
         function logoutUser() {
